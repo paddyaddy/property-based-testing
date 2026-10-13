@@ -1,0 +1,6 @@
+pbt.components.asp.facts.IntAspFactGeneratorProvider
+pbt.components.asp.facts.IntListAspFactGeneratorProvider
+pbt.components.asp.facts.BooleanAspFactGeneratorProvider
+pbt.components.asp.facts.LongAspFactGeneratorProvider
+pbt.components.asp.facts.DoubleAspFactGeneratorProvider
+pbt.components.asp.facts.StringAspFactGeneratorProvider

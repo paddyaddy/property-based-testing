@@ -1,0 +1,6 @@
+pbt.components.shrinker.IntShrinkerProvider
+pbt.components.shrinker.IntListShrinkerProvider
+pbt.components.shrinker.BooleanShrinkerProvider
+pbt.components.shrinker.LongShrinkerProvider
+pbt.components.shrinker.DoubleShrinkerProvider
+pbt.components.shrinker.StringShrinkerProvider

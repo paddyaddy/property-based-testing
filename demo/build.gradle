@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+    id 'org.tugraz.pbt'
+}
+
+group = 'org.tugraz.pbt.demo'
+version = '0.1.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}

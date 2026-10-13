@@ -1,0 +1,6 @@
+pbt.components.generator.IntGeneratorProvider
+pbt.components.generator.IntListGeneratorProvider
+pbt.components.generator.BooleanGeneratorProvider
+pbt.components.generator.LongGeneratorProvider
+pbt.components.generator.DoubleGeneratorProvider
+pbt.components.generator.StringGeneratorProvider

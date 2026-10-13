@@ -1,0 +1,30 @@
+{
+  "name": "not_bool",
+  "description": "not(boolean) -> boolean: involution property not(not(b)) == b",
+  "suts": {
+    "reference": {
+      "type": "java",
+      "class": "demo.math.BooleanOps",
+      "method": "not",
+      "static": true
+    },
+    "buggy": {
+      "type": "java",
+      "class": "demo.math.BooleanOps",
+      "method": "buggyNot",
+      "static": true
+    }
+  },
+  "generator": {
+    "kind": "boolean"
+  },
+  "properties": [
+    {
+      "id": "involution",
+      "type": "METAMORPHIC",
+      "description": "not(not(b)) == b",
+      "validator": { "kind": "asp", "relation": "asp/bool_involution.lp" },
+      "transform": "booleanNegate"
+    }
+  ]
+}

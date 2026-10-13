@@ -1,0 +1,31 @@
+{
+  "name": "reverse_string",
+  "description": "reverse(String) -> String: involution property reverse(reverse(s)) == s",
+  "suts": {
+    "reference": {
+      "type": "java",
+      "class": "demo.strings.StringOps",
+      "method": "reverse",
+      "static": true
+    },
+    "buggy": {
+      "type": "java",
+      "class": "demo.strings.StringOps",
+      "method": "buggyReverse",
+      "static": true
+    }
+  },
+  "generator": {
+    "kind": "string",
+    "params": { "minLen": 0, "maxLen": 12 }
+  },
+  "properties": [
+    {
+      "id": "involution",
+      "type": "METAMORPHIC",
+      "description": "reverse(reverse(s)) == s",
+      "validator": { "kind": "asp", "relation": "asp/string_involution.lp" },
+      "transform": "stringReverse"
+    }
+  ]
+}

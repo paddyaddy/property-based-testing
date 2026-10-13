@@ -1,0 +1,49 @@
+{
+  "name": "sort",
+  "description": "sort(List<Integer>) -> List<Integer>",
+  "suts": {
+    "reference": {
+      "type": "java",
+      "class": "demo.sort.Sorter",
+      "method": "sort(java.util.List<java.lang.Integer>)",
+      "static": false
+    },
+    "buggy": {
+      "type": "java",
+      "class": "demo.sort.BuggySorter",
+      "method": "sort(java.util.List<java.lang.Integer>)"
+    }
+  },
+  "generator": {
+    "kind": "intList",
+    "regenerate": false,
+    "params": {
+      "minLen": 1,
+      "maxLen": 12,
+      "minValue": -50,
+      "maxValue": 50
+    }
+  },
+  "properties": [
+    {
+      "id": "S1_ordered",
+      "type": "INVARIANT",
+      "description": "output is non-decreasing",
+      "validator": {
+        "kind": "asp",
+        "relation": "sort_ordered.lp"
+      }
+    },
+    {
+      "id": "S4_permutation_invariance",
+      "type": "METAMORPHIC",
+      "description": "sort(shuffle(xs)) == sort(xs)",
+      "validator": {
+        "kind": "asp",
+        "relation": "sort_output_equal.lp"
+      },
+      "transform": "shuffle",
+      "applicability": "at_least_two_elements"
+    }
+  ]
+}

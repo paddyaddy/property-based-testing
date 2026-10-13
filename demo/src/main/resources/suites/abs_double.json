@@ -1,0 +1,30 @@
+{
+  "name": "abs_double",
+  "description": "abs(double) -> double: output is non-negative (ASP facts scaled by 1000)",
+  "suts": {
+    "reference": {
+      "type": "java",
+      "class": "demo.math.DoubleMath",
+      "method": "abs",
+      "static": true
+    },
+    "buggy": {
+      "type": "java",
+      "class": "demo.math.DoubleMath",
+      "method": "buggyAbs",
+      "static": true
+    }
+  },
+  "generator": {
+    "kind": "double",
+    "params": { "min": -1000.0, "max": 1000.0 }
+  },
+  "properties": [
+    {
+      "id": "nonneg",
+      "type": "INVARIANT",
+      "description": "abs(d) >= 0.0",
+      "validator": { "kind": "asp", "relation": "asp/abs_nonneg.lp" }
+    }
+  ]
+}

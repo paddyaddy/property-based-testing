@@ -1,0 +1,30 @@
+{
+  "name": "abs_long",
+  "description": "abs(long) -> long: output is non-negative",
+  "suts": {
+    "reference": {
+      "type": "java",
+      "class": "demo.math.LongMath",
+      "method": "abs",
+      "static": true
+    },
+    "buggy": {
+      "type": "java",
+      "class": "demo.math.LongMath",
+      "method": "buggyAbs",
+      "static": true
+    }
+  },
+  "generator": {
+    "kind": "long",
+    "params": { "min": -1000000, "max": 1000000 }
+  },
+  "properties": [
+    {
+      "id": "nonneg",
+      "type": "INVARIANT",
+      "description": "abs(n) >= 0",
+      "validator": { "kind": "asp", "relation": "asp/abs_nonneg.lp" }
+    }
+  ]
+}

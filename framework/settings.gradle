@@ -1,0 +1,5 @@
+rootProject.name = 'pbt-framework'
+
+include 'pbt-pipeline'
+include 'pbt-components'
+include 'pbt-gradle-plugin'

@@ -1,0 +1,57 @@
+{
+  "name": "sort",
+  "description": "sort(List<Integer>) -> List<Integer>: five ASP-backed properties",
+  "suts": {
+    "reference": {
+      "type": "java",
+      "class": "demo.sort.Sorter",
+      "method": "sort(java.util.List<java.lang.Integer>)",
+      "static": false
+    },
+    "buggy": {
+      "type": "java",
+      "class": "demo.sort.BuggySorter",
+      "method": "sort(java.util.List<java.lang.Integer>)",
+      "static": false
+    }
+  },
+  "generator": {
+    "kind": "intList",
+    "params": { "minLen": 2, "maxLen": 12, "minValue": -50, "maxValue": 50 }
+  },
+  "properties": [
+    {
+      "id": "S1_ordered",
+      "type": "INVARIANT",
+      "description": "output is non-decreasing",
+      "validator": { "kind": "asp", "relation": "asp/sort_ordered.lp" }
+    },
+    {
+      "id": "S2_length_preserved",
+      "type": "INVARIANT",
+      "description": "sort(xs).size() == xs.size()",
+      "validator": { "kind": "asp", "relation": "asp/sort_length_preserved.lp" }
+    },
+    {
+      "id": "S3_elements_preserved",
+      "type": "INVARIANT",
+      "description": "multiset(sort(xs)) == multiset(xs)",
+      "validator": { "kind": "asp", "relation": "asp/sort_elements_preserved.lp" }
+    },
+    {
+      "id": "S4_permutation_invariance",
+      "type": "METAMORPHIC",
+      "description": "sort(shuffle(xs)) == sort(xs)",
+      "validator": { "kind": "asp", "relation": "asp/sort_output_equal.lp" },
+      "transform": "shuffle",
+      "applicability": "applicability/at_least_two_elements.lp"
+    },
+    {
+      "id": "S5_negation_symmetry",
+      "type": "METAMORPHIC",
+      "description": "sort(-xs) == negate(reverse(sort(xs)))",
+      "validator": { "kind": "asp", "relation": "asp/sort_negation_symmetry.lp" },
+      "transform": "negate"
+    }
+  ]
+}
