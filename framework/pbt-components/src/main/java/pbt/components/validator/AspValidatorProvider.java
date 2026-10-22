@@ -2,6 +2,7 @@ package pbt.components.validator;
 
 import com.google.gson.JsonObject;
 import pbt.components.asp.CliAspEngine;
+import pbt.descriptor.SuiteDescriptor;
 import pbt.spi.Registry;
 import pbt.spi.asp.AspEngine;
 import pbt.spi.asp.facts.AspFactGeneratorProvider;
@@ -44,15 +45,15 @@ public final class AspValidatorProvider implements ValidatorProvider {
         this.factGenerators = Registry.load(AspFactGeneratorProvider.class);
     }
 
-    private static String buildFacts(CheckContext ctx, AspFactGeneratorProvider fg) {
+    private static String buildFacts(CheckContext ctx, AspFactGeneratorProvider in, AspFactGeneratorProvider out) {
         if (ctx.followUpInput() != null) {
-            return fg.toFacts(ctx.sourceInput(), "source_in")
-                    + fg.toFacts(ctx.sourceOutput(), "source_out")
-                    + fg.toFacts(ctx.followUpInput(), "followup_in")
-                    + fg.toFacts(ctx.followUpOutput(), "followup_out");
+            return in.toFacts(ctx.sourceInput(), "source_in")
+                    + out.toFacts(ctx.sourceOutput(), "source_out")
+                    + in.toFacts(ctx.followUpInput(), "followup_in")
+                    + out.toFacts(ctx.followUpOutput(), "followup_out");
         }
-        return fg.toFacts(ctx.sourceInput(), "in")
-                + fg.toFacts(ctx.sourceOutput(), "out");
+        return in.toFacts(ctx.sourceInput(), "in")
+                + out.toFacts(ctx.sourceOutput(), "out");
     }
 
     private static String loadRelation(JsonObject params) {
@@ -86,12 +87,32 @@ public final class AspValidatorProvider implements ValidatorProvider {
     @Override
     public Validator build(JsonObject params, String generatorKind) {
         AspFactGeneratorProvider fg = factGenerators.get(generatorKind).withParams(params);
+        return build(params, fg, fg);
+    }
+
+    /**
+     * Renders inputs with the suite's fact generator (configured by the generator params) and
+     * outputs with the {@code outputKind} fact generator, or like inputs when none is set.
+     */
+    @Override
+    public Validator build(JsonObject params, SuiteDescriptor suite) {
+        String inputKind = suite.factGenerator() != null ? suite.factGenerator() : suite.generator().kind();
+        JsonObject generatorParams = suite.generator().params() != null
+                ? suite.generator().params() : new JsonObject();
+        AspFactGeneratorProvider in = factGenerators.get(inputKind)
+                .withGeneratorParams(generatorParams).withParams(params);
+        AspFactGeneratorProvider out = suite.outputKind() != null
+                ? factGenerators.get(suite.outputKind()).withParams(params) : in;
+        return build(params, in, out);
+    }
+
+    private Validator build(JsonObject params, AspFactGeneratorProvider in, AspFactGeneratorProvider out) {
         String relation = loadRelation(params);
         String violationAtom = stringOrDefault(params, "violation", "violation");
         String defaultSignature = stringOrDefault(params, "failureSignature", violationAtom);
 
         return ctx -> {
-            String facts = buildFacts(ctx, fg);
+            String facts = buildFacts(ctx, in, out);
             String program = facts + "\n" + relation;
             if (engine.entails(program, violationAtom)) {
                 return CheckResult.fail(defaultSignature, facts);

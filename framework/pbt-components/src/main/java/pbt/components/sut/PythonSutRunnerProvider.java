@@ -6,6 +6,7 @@ import pbt.descriptor.SutSpec;
 import pbt.spi.Registry;
 import pbt.spi.sut.SutRunner;
 import pbt.spi.sut.SutRunnerProvider;
+import pbt.spi.type.Tuple;
 import pbt.spi.type.ValueTypeProvider;
 
 import java.io.*;
@@ -153,7 +154,9 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
             if (process == null) {
                 start();
             }
-            String requestJson = gson.toJson(Map.of("input", input));
+            String requestJson = input instanceof Tuple tuple
+                    ? gson.toJson(Map.of("args", tuple.values()))
+                    : gson.toJson(Map.of("input", input));
             BufferedWriter out = writer;
             BufferedReader in = reader;
             Future<String> response = io.submit(() -> {

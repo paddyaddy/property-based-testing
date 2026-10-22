@@ -11,6 +11,9 @@ import java.util.Map;
  *                      {@code null} the generator's own {@code kind} is used as the
  *                      lookup key, which works whenever the generator and fact
  *                      generator share the same name (the default convention)
+ * @param outputKind    optional ASP fact generator kind for SUT outputs; when
+ *                      {@code null} outputs are rendered like inputs, which only fits
+ *                      SUTs whose output type equals their input type
  */
 public record SuiteDescriptor(
         String name,
@@ -18,5 +21,6 @@ public record SuiteDescriptor(
         Map<String, SutSpec> suts,
         GeneratorSpec generator,
         String factGenerator,
+        String outputKind,
         List<PropertyDescriptor> properties) {
 }

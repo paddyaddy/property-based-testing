@@ -72,6 +72,8 @@ out(0, 3).  % out[0] = 3
 out(1, 1).  % out[1] = 1
 ```
 
+A `tuple` input renders each component with the fact generator of its kind and the position appended to the prefix: `in_0(V).`, `in_1(0, V).`, and so on. Outputs are rendered by the `outputKind` fact generator when the suite sets one, otherwise like inputs.
+
 ## Writing a `.lp` file
 
 The file should contain rules that derive `violation` and a `#show violation/0.` directive. Do not include facts (those are prepended by the framework). Keep the file self-contained: no `#include` or external files.
@@ -107,6 +109,10 @@ violation :- followup_out(P, _), not source_has(P).
 ## Availability check
 
 `CliAspEngine.isAvailable()` checks whether the `clingo` binary is on `PATH`. Tests that need the ASP oracle should guard with `assumeTrue(new CliAspEngine().isAvailable())` so they are skipped cleanly when clingo is absent.
+
+## Output kind
+
+The SUT output is rendered with the input's fact generator unless the suite sets `"outputKind"`. Set it whenever the output type differs from the input type (`"generator": {"kind": "string"}` with `"outputKind": "int"`), and always for `tuple` inputs.
 
 ## Fact generator override
 

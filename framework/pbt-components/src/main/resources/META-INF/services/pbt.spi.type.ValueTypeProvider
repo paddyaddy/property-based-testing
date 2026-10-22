@@ -4,3 +4,4 @@ pbt.components.type.BooleanValueTypeProvider
 pbt.components.type.LongValueTypeProvider
 pbt.components.type.DoubleValueTypeProvider
 pbt.components.type.StringValueTypeProvider
+pbt.components.type.TupleValueTypeProvider

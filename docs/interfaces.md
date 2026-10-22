@@ -30,7 +30,7 @@ The `Registry<P extends NamedProvider>` discovers implementations via `ServiceLo
 |---|---|
 | **Contract** | `Generator<?> build(JsonObject params)` — constructs a configured generator. |
 | **Use case** | ServiceLoader entry point for `Generator` implementations. `params` comes from the `"generator"` object in the suite descriptor. |
-| **Implementations** | `IntGeneratorProvider` (`"int"`) · `IntListGeneratorProvider` (`"intList"`) · `BooleanGeneratorProvider` (`"boolean"`) · `LongGeneratorProvider` (`"long"`) · `DoubleGeneratorProvider` (`"double"`, params: `min`/`max`) · `StringGeneratorProvider` (`"string"`, params: `minLen`/`maxLen`/`chars`) |
+| **Implementations** | `IntGeneratorProvider` (`"int"`) · `IntListGeneratorProvider` (`"intList"`) · `BooleanGeneratorProvider` (`"boolean"`) · `LongGeneratorProvider` (`"long"`) · `DoubleGeneratorProvider` (`"double"`, params: `min`/`max`) · `StringGeneratorProvider` (`"string"`, params: `minLen`/`maxLen`/`chars`) · `TupleGeneratorProvider` (`"tuple"`, param: `components`; produces a `Tuple` for multi-parameter SUTs) |
 
 ---
 
@@ -47,7 +47,7 @@ The `Registry<P extends NamedProvider>` discovers implementations via `ServiceLo
 |---|---|
 | **Contract** | `Shrinker<?> build(JsonObject params)` — same `params` shape as the corresponding generator. |
 | **Use case** | ServiceLoader entry point for `Shrinker` implementations. Matched to the active generator by identical `name()`. |
-| **Implementations** | `IntShrinkerProvider` (`"int"`, toward 0) · `IntListShrinkerProvider` (`"intList"`, block removal + element shrinking) · `BooleanShrinkerProvider` (`"boolean"`, toward `false`) · `LongShrinkerProvider` (`"long"`, toward 0) · `DoubleShrinkerProvider` (`"double"`, toward 0.0 by halving) · `StringShrinkerProvider` (`"string"`, drop chars + shift toward first char in set) |
+| **Implementations** | `IntShrinkerProvider` (`"int"`, toward 0) · `IntListShrinkerProvider` (`"intList"`, block removal + element shrinking) · `BooleanShrinkerProvider` (`"boolean"`, toward `false`) · `LongShrinkerProvider` (`"long"`, toward 0) · `DoubleShrinkerProvider` (`"double"`, toward 0.0 by halving) · `StringShrinkerProvider` (`"string"`, drop chars + shift toward first char in set) · `TupleShrinkerProvider` (`"tuple"`, shrinks one component at a time) |
 
 ---
 
@@ -81,7 +81,7 @@ The `Registry<P extends NamedProvider>` discovers implementations via `ServiceLo
 |---|---|
 | **Contract** | `SutRunner build(SutSpec spec)` — constructs a runner from a `SutSpec` descriptor. |
 | **Use case** | ServiceLoader entry point for `SutRunner` implementations. The `SutSpec` carries `className`, `method`, `isStatic`, `args`, `file`, `interpreter`, `timeoutSeconds`, `outputType`; each runner reads only the fields it needs. |
-| **Implementations** | `JavaSutRunnerProvider` (`"java"`, reflection on static or instance methods; class and method are resolved once at build time, instance methods run on a fresh instance per call) · `PythonSutRunnerProvider` (`"python"`, keeps one persistent `python3` worker per SUT, started via the bundled `sut_harness.py --server`; newline-delimited JSON requests and responses over stdin/stdout) |
+| **Implementations** | `JavaSutRunnerProvider` (`"java"`, reflection on static or instance methods, a `Tuple` input is spread over the parameters; class and method are resolved once at build time, instance methods run on a fresh instance per call) · `PythonSutRunnerProvider` (`"python"`, keeps one persistent `python3` worker per SUT, started via the bundled `sut_harness.py --server`; newline-delimited JSON requests and responses over stdin/stdout) |
 
 ---
 
@@ -96,7 +96,7 @@ The `Registry<P extends NamedProvider>` discovers implementations via `ServiceLo
 ### `ValidatorProvider`
 | | |
 |---|---|
-| **Contract** | `Validator build(JsonObject params, String generatorKind)` — `generatorKind` is the suite's generator name, used by ASP validators to pick the right fact renderer. |
+| **Contract** | `Validator build(JsonObject params, String generatorKind)` — `generatorKind` is the suite's generator name, used by ASP validators to pick the right fact renderer. The default method `build(JsonObject params, SuiteDescriptor suite)` is what the pipeline calls; it gives access to the generator params and `outputKind` and by default delegates to the one above. |
 | **Use case** | ServiceLoader entry point for `Validator` implementations. Referenced by `"kind"` in a property's `"validator"` object. |
 | **Implementations** | `AspValidatorProvider` (`"asp"`, runs clingo against a `.lp` file; sets `diagnostics` to the assembled ASP facts string) |
 
@@ -121,8 +121,8 @@ The `Registry<P extends NamedProvider>` discovers implementations via `ServiceLo
 | | |
 |---|---|
 | **Contract** | `String toFacts(Object value, String prefix)` — renders a typed value as ground ASP facts; `null` must return `""`. |
-| **Use case** | `default AspFactGeneratorProvider withParams(JsonObject validatorParams)` lets a renderer take parameters from the property's `validator` object; the default returns the same instance. Used by `AspValidatorProvider` to assemble the fact block passed to the engine, and by `PipelineRunner` to render applicability-check inputs. Each fact is prefixed with the caller-supplied role (e.g. `"in"`, `"out"`, `"source_out"`, `"followup_in"`, …). |
-| **Implementations** | `IntAspFactGeneratorProvider` (`"int"`, `prefix(v).`) · `IntListAspFactGeneratorProvider` (`"intList"`, `prefix(i,v).`) · `BooleanAspFactGeneratorProvider` (`"boolean"`, `prefix(0/1).`) · `LongAspFactGeneratorProvider` (`"long"`, `prefix(v).`) · `DoubleAspFactGeneratorProvider` (`"double"`, `prefix(N).` where N = round(value × scale); scale is 1000 unless the property's `validator` sets `"scale"`) · `StringAspFactGeneratorProvider` (`"string"`, `prefix("escaped").`) |
+| **Use case** | `default AspFactGeneratorProvider withParams(JsonObject validatorParams)` lets a renderer take parameters from the property's `validator` object; the default returns the same instance. `withGeneratorParams(JsonObject generatorParams)` does the same with the suite's `generator.params` and is applied first; the `tuple` renderer needs it to learn its component kinds. Used by `AspValidatorProvider` to assemble the fact block passed to the engine, and by `PipelineRunner` to render applicability-check inputs. Each fact is prefixed with the caller-supplied role (e.g. `"in"`, `"out"`, `"source_out"`, `"followup_in"`, …). |
+| **Implementations** | `IntAspFactGeneratorProvider` (`"int"`, `prefix(v).`) · `IntListAspFactGeneratorProvider` (`"intList"`, `prefix(i,v).`) · `BooleanAspFactGeneratorProvider` (`"boolean"`, `prefix(0/1).`) · `LongAspFactGeneratorProvider` (`"long"`, `prefix(v).`) · `DoubleAspFactGeneratorProvider` (`"double"`, `prefix(N).` where N = round(value × scale); scale is 1000 unless the property's `validator` sets `"scale"`) · `StringAspFactGeneratorProvider` (`"string"`, `prefix("escaped").`) · `TupleAspFactGeneratorProvider` (`"tuple"`, component *i* is rendered by its own provider with prefix `prefix_i`) |
 
 ---
 
@@ -146,4 +146,4 @@ The framework ships `applicability/at_least_two_elements.lp` (requires a list in
 |---|---|
 | **Contract** | `Type javaType()` — Java reflection type for (de)serialization; `String describe(Object value)` — human-readable rendering for reports and witnesses. |
 | **Use case** | Centralises per-type concerns. `PipelineRunner` looks up the provider by the suite's generator kind and uses it in two places: `describe()` formats the witness in the shrink log and the Gradle task reporter; `javaType()` drives `ArtifactCodec` so the artifact witness field is valid JSON that round-trips back to the original type. `PythonSutRunnerProvider` also uses `javaType()` to deserialize SUT output from JSON. Matched to the active generator by identical `name()`. |
-| **Implementations** | `IntValueTypeProvider` (`"int"`, `Integer.class`) · `IntListValueTypeProvider` (`"intList"`, `List<Integer>` via Gson `TypeToken`) · `BooleanValueTypeProvider` (`"boolean"`, `Boolean.class`) · `LongValueTypeProvider` (`"long"`, `Long.class`) · `DoubleValueTypeProvider` (`"double"`, `Double.class`) · `StringValueTypeProvider` (`"string"`, `String.class`, wraps value in quotes in `describe()`) |
+| **Implementations** | `IntValueTypeProvider` (`"int"`, `Integer.class`) · `IntListValueTypeProvider` (`"intList"`, `List<Integer>` via Gson `TypeToken`) · `BooleanValueTypeProvider` (`"boolean"`, `Boolean.class`) · `LongValueTypeProvider` (`"long"`, `Long.class`) · `DoubleValueTypeProvider` (`"double"`, `Double.class`) · `StringValueTypeProvider` (`"string"`, `String.class`, wraps value in quotes in `describe()`) · `TupleValueTypeProvider` (`"tuple"`, `Tuple.class`) |

@@ -58,9 +58,15 @@ Newline-delimited JSON, one request line answered by exactly one response line:
 → {"input": [3, 1, 2]}
 ← {"output": [1, 2, 3]}
 
+→ {"args": ["ab", 3]}
+← {"output": "ababab"}
+
 → {"input": null}
 ← {"error": "<exception message>"}
 ```
+
+A SUT with several parameters (a `tuple` input) receives `{"args": [...]}` and the harness calls the
+function with the list spread as positional arguments; every other input arrives as `{"input": ...}`.
 
 - The input is the generated Java value serialized with Gson. The output is
   deserialized with the Java type of `outputType`.

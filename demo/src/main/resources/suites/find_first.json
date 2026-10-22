@@ -1,0 +1,48 @@
+{
+  "name": "find_first",
+  "description": "findFirst(List<Integer> haystack, Integer needle) -> int: index of the first match or -1",
+  "suts": {
+    "reference": {
+      "type": "java",
+      "class": "demo.search.Search",
+      "method": "findFirst(List, Integer)",
+      "static": true
+    },
+    "buggy": {
+      "type": "java",
+      "class": "demo.search.Search",
+      "method": "buggyFindFirst(List, Integer)",
+      "static": true
+    }
+  },
+  "generator": {
+    "kind": "tuple",
+    "params": {
+      "components": [
+        { "kind": "intList", "params": { "minLen": 0, "maxLen": 8, "minValue": -5, "maxValue": 5 } },
+        { "kind": "int", "params": { "min": -5, "max": 5 } }
+      ]
+    }
+  },
+  "outputKind": "int",
+  "properties": [
+    {
+      "id": "F1_result_matches",
+      "type": "INVARIANT",
+      "description": "a non-negative result points at an element equal to the needle",
+      "validator": { "kind": "asp", "relation": "asp/find_first_match.lp" }
+    },
+    {
+      "id": "F2_absent_is_minus_one",
+      "type": "INVARIANT",
+      "description": "-1 only when the needle is not in the list, and no other negative result",
+      "validator": { "kind": "asp", "relation": "asp/find_first_absent.lp" }
+    },
+    {
+      "id": "F3_first_occurrence",
+      "type": "INVARIANT",
+      "description": "no earlier index holds the needle",
+      "validator": { "kind": "asp", "relation": "asp/find_first_earliest.lp" }
+    }
+  ]
+}

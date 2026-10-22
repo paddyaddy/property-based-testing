@@ -4,3 +4,4 @@ pbt.components.generator.BooleanGeneratorProvider
 pbt.components.generator.LongGeneratorProvider
 pbt.components.generator.DoubleGeneratorProvider
 pbt.components.generator.StringGeneratorProvider
+pbt.components.generator.TupleGeneratorProvider

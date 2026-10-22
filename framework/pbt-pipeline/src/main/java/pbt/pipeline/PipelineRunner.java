@@ -242,8 +242,8 @@ public final class PipelineRunner {
             List<Object> inputs = sharedInputs != null
                     ? sharedInputs
                     : generateAll(generator, new Random(seed ^ (long) pd.id().hashCode()));
-            Predicate<Object> applicability = buildApplicabilityCheck(pd, factGeneratorKind);
-            PropertyResult r = runProperty(pd, inputs, factGeneratorKind, shrinker, sutRunner,
+            Predicate<Object> applicability = buildApplicabilityCheck(pd, factGeneratorKind, genParams);
+            PropertyResult r = runProperty(pd, inputs, descriptor, shrinker, sutRunner,
                     applicability, valueType);
             if (artifactsDir != null) {
                 var artifact = new PropertyResultArtifact(
@@ -268,7 +268,7 @@ public final class PipelineRunner {
     private PropertyResult runProperty(
             PropertyDescriptor pd,
             List<Object> inputs,
-            String generatorKind,
+            SuiteDescriptor descriptor,
             Shrinker<Object> shrinker,
             SutRunner sutRunner,
             Predicate<Object> applicability,
@@ -276,7 +276,7 @@ public final class PipelineRunner {
 
         Validator validator = validators
                 .get(pd.validator().get("kind").getAsString())
-                .build(pd.validator(), generatorKind);
+                .build(pd.validator(), descriptor);
 
         boolean isMetamorphic = pd.type() == PropertyKind.METAMORPHIC;
         Transform transform = isMetamorphic ? resolveTransform(pd.transform()) : null;
@@ -316,7 +316,8 @@ public final class PipelineRunner {
     }
 
     // TODO make multiple applicability checks possible
-    private Predicate<Object> buildApplicabilityCheck(PropertyDescriptor pd, String generatorKind) {
+    private Predicate<Object> buildApplicabilityCheck(
+            PropertyDescriptor pd, String factGeneratorKind, JsonObject generatorParams) {
         String path = pd.applicability();
         if (path == null || path.isBlank()) return null;
         String program = loadResource(path);
@@ -329,7 +330,7 @@ public final class PipelineRunner {
             throw new IllegalStateException("property '" + pd.id() + "' declares applicability '"
                     + path + "' but the ASP engine " + aspEngine.name() + " is not available");
         }
-        AspFactGeneratorProvider fg = factGenerators.get(generatorKind);
+        AspFactGeneratorProvider fg = factGenerators.get(factGeneratorKind).withGeneratorParams(generatorParams);
         return input -> !aspEngine.entails(fg.toFacts(input, "in") + "\n" + program, "skip");
     }
 

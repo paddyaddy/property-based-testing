@@ -4,3 +4,4 @@ pbt.components.shrinker.BooleanShrinkerProvider
 pbt.components.shrinker.LongShrinkerProvider
 pbt.components.shrinker.DoubleShrinkerProvider
 pbt.components.shrinker.StringShrinkerProvider
+pbt.components.shrinker.TupleShrinkerProvider

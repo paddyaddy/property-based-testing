@@ -7,7 +7,9 @@ Invoked by PythonSutRunner — not called by SUT authors directly:
 
 The runner starts one persistent worker per SUT with ``--server``.  The worker loads
 the named file as a module, resolves the callable named by ``--target``, and then
-serves newline-delimited JSON requests on stdin (``{"input": ...}``), answering each
+serves newline-delimited JSON requests on stdin (``{"input": ...}``, or ``{"args": [...]}``
+for a callable with several parameters, which receives the list spread as positional
+arguments), answering each
 with one line on stdout (``{"output": ...}`` or ``{"error": "..."}``) until stdin
 closes.
 
@@ -166,7 +168,7 @@ def _resolve_callable(module, class_name, method_name, force_static, file_path, 
 def _server_loop(fn):
     """Persistent worker loop: read JSON-line requests, write JSON-line responses.
 
-    Request:  {"input": <json>}
+    Request:  {"input": <json>}  or  {"args": [<json>, ...]}
     Response: {"output": <json>}  or  {"error": "<message>"}
 
     Exits cleanly on EOF (stdin closed by the runner).
@@ -177,13 +179,13 @@ def _server_loop(fn):
             continue
         try:
             request = json.loads(line)
-            input_value = request["input"]
+            args = request["args"] if "args" in request else [request["input"]]
         except Exception as exc:
             sys.stdout.write(json.dumps({"error": f"bad request: {exc}"}) + "\n")
             sys.stdout.flush()
             continue
         try:
-            result = fn(input_value)
+            result = fn(*args)
             sys.stdout.write(json.dumps({"output": result}) + "\n")
         except Exception as exc:
             sys.stdout.write(json.dumps({"error": str(exc)}) + "\n")

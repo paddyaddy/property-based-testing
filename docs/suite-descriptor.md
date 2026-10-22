@@ -140,6 +140,7 @@ All optional fields shown, with inline explanation in comments
 | `suts` | yes | — | Map of SUT name → `SutSpec`; `"all"` is reserved |
 | `generator` | yes | — | Input generator configuration |
 | `factGenerator` | no | generator `kind` | Override for the `AspFactGeneratorProvider` key |
+| `outputKind` | no | same as the input | `AspFactGeneratorProvider` key used to render SUT outputs. Required whenever the output type differs from the input type, e.g. a `tuple` input or `string` in, `int` out |
 | `properties` | yes | — | List of properties; must be non-empty |
 
 ### `SutSpec`
@@ -148,7 +149,7 @@ All optional fields shown, with inline explanation in comments
 |---|---|---|
 | `type` | yes | Runner kind: `"java"` or `"python"` |
 | `class` | java | Fully qualified class name |
-| `method` | java, python | Java: method name, optionally with the parameter type, e.g. `sort(List)` or `sort(java.util.List<java.lang.Integer>)`; the type is required when the name is overloaded. Python: `fn(...)` or `Class.method(...)` |
+| `method` | java, python | Java: method name, optionally with the parameter types, e.g. `sort(List)`, `sort(java.util.List<java.lang.Integer>)` or `repeat(String, int)`; the types are required when the name is overloaded. A method with several parameters needs a `tuple` generator. Python: `fn(...)` or `Class.method(...)` |
 | `static` | java | `true` for a static method (default `false`) |
 | `file` | python | Script path |
 | `args` | python | Extra arguments passed to the harness process |
@@ -196,3 +197,26 @@ All optional fields shown, with inline explanation in comments
 | `long` | `Long` | `min=-1000`, `max=1000` | |
 | `double` | `Double` | `min=-1000.0`, `max=1000.0` | ASP facts use scale 1000 by default: fact value = round(v × scale); set `"scale"` in the property's `validator` object to change it |
 | `string` | `String` | `minLen=0`, `maxLen=10`, `chars=a-z` | ASP facts are quoted strings: `prefix("value").` |
+| `tuple` | `Tuple` | `components` (required) | One generated value per SUT parameter, see below |
+
+### Several parameters: `tuple`
+
+A SUT method with more than one parameter takes a `tuple` input. `components` lists one
+generator per parameter, in order, each with its own `kind` and optional `params`. The runner
+spreads the values over the parameters (Java: reflection arguments; Python: positional
+arguments).
+
+```json
+{
+  "suts": { "ref": { "type": "java", "class": "demo.Text", "method": "repeat(String, int)", "static": true } },
+  "generator": { "kind": "tuple", "params": { "components": [
+    { "kind": "string", "params": { "maxLen": 4 } },
+    { "kind": "int", "params": { "min": 0, "max": 5 } } ] } },
+  "outputKind": "string"
+}
+```
+
+Shrinking works per component with that component's own shrinker. ASP facts prefix each
+component with its position: the input above becomes `in_0("ab").` and `in_1(3).`; the output
+uses the `outputKind` renderer and stays `out(...)`. The built-in transforms do not apply to
+tuples, so metamorphic properties on a tuple need a custom `Transform`.

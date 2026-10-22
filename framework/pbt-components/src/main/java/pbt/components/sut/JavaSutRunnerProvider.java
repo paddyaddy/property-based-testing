@@ -3,9 +3,11 @@ package pbt.components.sut;
 import pbt.descriptor.SutSpec;
 import pbt.spi.sut.SutRunner;
 import pbt.spi.sut.SutRunnerProvider;
+import pbt.spi.type.Tuple;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,9 +15,10 @@ import java.util.List;
  * Invokes a Java method (static or instance) via reflection.
  *
  * <p>The class and method are resolved once when the runner is built. The method must take
- * exactly one parameter. If several public methods share the name, the parameter type in the
- * descriptor's {@code method} (for example {@code "sort(List)"}) selects one; the type may be
- * a simple or fully qualified name, generics are ignored. Ambiguity is an error. Instance
+ * at least one parameter. If several public methods share the name, the parameter types in the
+ * descriptor's {@code method} (for example {@code "sort(List)"} or {@code "repeat(String, int)"})
+ * select one; a type may be a simple or fully qualified name, generics are ignored. Ambiguity
+ * is an error. A method with several parameters is called with the values of a {@link Tuple} input. Instance
  * methods are called on a fresh instance per call, so SUT state does not leak between inputs.
  */
 public final class JavaSutRunnerProvider implements SutRunnerProvider {
@@ -26,43 +29,74 @@ public final class JavaSutRunnerProvider implements SutRunnerProvider {
     }
 
     /**
-     * The declared parameter type without generics, or null when the signature names none.
+     * The declared parameter types without generics, or null when the signature names none.
      */
-    private static String parseParameterType(String method) {
+    private static List<String> parseParameterTypes(String method) {
         int open = method.indexOf('(');
         int close = method.lastIndexOf(')');
         if (open < 0 || close < open) return null;
         String inner = method.substring(open + 1, close).trim();
         if (inner.isEmpty() || inner.equals("...")) return null;
-        int generics = inner.indexOf('<');
-        return (generics < 0 ? inner : inner.substring(0, generics)).trim();
+        List<String> types = new ArrayList<>();
+        int depth = 0;
+        int partStart = 0;
+        for (int i = 0; i <= inner.length(); i++) {
+            char c = i < inner.length() ? inner.charAt(i) : ',';
+            if (c == '<') depth++;
+            else if (c == '>') depth--;
+            else if (c == ',' && depth == 0) {
+                String type = inner.substring(partStart, i).trim();
+                int generics = type.indexOf('<');
+                types.add((generics < 0 ? type : type.substring(0, generics)).trim());
+                partStart = i + 1;
+            }
+        }
+        return types;
     }
 
-    private static Method findMethod(Class<?> cls, String name, String parameterType) {
+    private static boolean matches(Method m, List<String> parameterTypes) {
+        Class<?>[] actual = m.getParameterTypes();
+        if (actual.length != parameterTypes.size()) return false;
+        for (int i = 0; i < actual.length; i++) {
+            String wanted = parameterTypes.get(i);
+            if (!actual[i].getSimpleName().equals(wanted) && !actual[i].getName().equals(wanted)) return false;
+        }
+        return true;
+    }
+
+    private static Method findMethod(Class<?> cls, String name, List<String> parameterTypes) {
         List<Method> candidates = Arrays.stream(cls.getMethods())
-                .filter(m -> m.getName().equals(name) && m.getParameterCount() == 1) // TODO make count != 1 work
+                .filter(m -> m.getName().equals(name) && m.getParameterCount() >= 1)
                 .toList();
         if (candidates.isEmpty()) {
             throw new IllegalArgumentException(
-                    "no public single-argument method named '" + name + "' in " + cls.getName());
+                    "no public method named '" + name + "' with parameters in " + cls.getName());
         }
-        if (parameterType != null) {
-            candidates = candidates.stream()
-                    .filter(m -> {
-                        Class<?> p = m.getParameterTypes()[0];
-                        return p.getSimpleName().equals(parameterType) || p.getName().equals(parameterType);
-                    })
-                    .toList();
+        if (parameterTypes != null) {
+            candidates = candidates.stream().filter(m -> matches(m, parameterTypes)).toList();
             if (candidates.isEmpty()) {
-                throw new IllegalArgumentException("no public method '" + name + "(" + parameterType
-                        + ")' in " + cls.getName());
+                throw new IllegalArgumentException("no public method '" + name + "("
+                        + String.join(",", parameterTypes) + ")' in " + cls.getName());
             }
         }
         if (candidates.size() > 1) {
             throw new IllegalArgumentException("ambiguous method '" + name + "' in " + cls.getName()
-                    + "; name the parameter type, e.g. \"" + name + "(List)\"");
+                    + "; name the parameter types, e.g. \"" + name + "(List)\"");
         }
         return candidates.get(0);
+    }
+
+    /**
+     * A {@link Tuple} is spread over the parameters; any other input is the single argument.
+     */
+    private static Object[] arguments(Method method, Object input) {
+        Object[] args = input instanceof Tuple tuple ? tuple.values().toArray() : new Object[]{input};
+        if (args.length != method.getParameterCount()) {
+            throw new IllegalArgumentException(method.getName() + " takes " + method.getParameterCount()
+                    + " argument(s) but the input provides " + args.length
+                    + (input instanceof Tuple ? "" : "; use a 'tuple' generator for several parameters"));
+        }
+        return args;
     }
 
     @Override
@@ -75,7 +109,7 @@ public final class JavaSutRunnerProvider implements SutRunnerProvider {
         String signature = spec.method();
         if (signature == null) throw new IllegalArgumentException("SutSpec.method must not be null");
         String methodName = parseMethodName(signature);
-        String parameterType = parseParameterType(signature);
+        List<String> parameterTypes = parseParameterTypes(signature);
 
         Class<?> cls;
         try {
@@ -83,7 +117,7 @@ public final class JavaSutRunnerProvider implements SutRunnerProvider {
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException("SUT class not found: " + spec.className(), e);
         }
-        Method method = findMethod(cls, methodName, parameterType);
+        Method method = findMethod(cls, methodName, parameterTypes);
         method.setAccessible(true);
         Constructor<?> constructor = null;
         if (!spec.isStatic()) {
@@ -99,7 +133,7 @@ public final class JavaSutRunnerProvider implements SutRunnerProvider {
         return input -> {
             try {
                 Object target = instanceConstructor == null ? null : instanceConstructor.newInstance();
-                return method.invoke(target, input);
+                return method.invoke(target, arguments(method, input));
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException("SUT invocation failed: " + cls.getName() + "#" + methodName, e);
             }

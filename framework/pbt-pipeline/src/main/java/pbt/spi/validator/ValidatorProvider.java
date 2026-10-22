@@ -1,6 +1,7 @@
 package pbt.spi.validator;
 
 import com.google.gson.JsonObject;
+import pbt.descriptor.SuiteDescriptor;
 import pbt.spi.NamedProvider;
 
 /**
@@ -17,4 +18,13 @@ public interface ValidatorProvider extends NamedProvider {
      *                      used to look up the right fact generator for ASP-backed validators
      */
     Validator build(JsonObject params, String generatorKind);
+
+    /**
+     * Builds a validator with access to the whole suite, so it can see the generator
+     * parameters and the output kind. The default ignores everything but the generator
+     * kind and delegates to {@link #build(JsonObject, String)}.
+     */
+    default Validator build(JsonObject params, SuiteDescriptor suite) {
+        return build(params, suite.generator().kind());
+    }
 }

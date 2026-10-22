@@ -34,4 +34,13 @@ public interface AspFactGeneratorProvider extends NamedProvider {
     default AspFactGeneratorProvider withParams(JsonObject validatorParams) {
         return this;
     }
+
+    /**
+     * Returns a renderer configured by the suite's {@code generator.params}, for renderers
+     * whose shape depends on the generator (for example a tuple of several components).
+     * Called before {@link #withParams}. The default returns this instance.
+     */
+    default AspFactGeneratorProvider withGeneratorParams(JsonObject generatorParams) {
+        return this;
+    }
 }
