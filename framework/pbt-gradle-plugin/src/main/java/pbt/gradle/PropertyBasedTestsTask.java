@@ -132,6 +132,12 @@ public abstract class PropertyBasedTestsTask extends DefaultTask {
     @Classpath
     public abstract ConfigurableFileCollection getSutClasspath();
 
+    /**
+     * Directory that relative {@code file} and {@code classpath} entries of a SUT are resolved against.
+     */
+    @Internal
+    public abstract DirectoryProperty getBaseDir();
+
     @Input
     public abstract Property<Integer> getRunsPerProperty();
 
@@ -221,7 +227,7 @@ public abstract class PropertyBasedTestsTask extends DefaultTask {
                                 getRunsPerProperty().get(), getSeed().get(), sutArtifactsDir,
                                 getMaxShrinkSteps().get());
                         SutRunner sutRunner = sutRunners.get(entry.getValue().type())
-                                .build(entry.getValue());
+                                .build(entry.getValue().resolvedAgainst(getBaseDir().get().getAsFile().toPath()));
                         SuiteResult result;
                         try {
                             result = runner.run(descriptor, sutRunner);

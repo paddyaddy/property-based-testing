@@ -9,7 +9,16 @@ import org.gradle.api.provider.Property;
 public abstract class PbtExtension {
 
     /**
-     * Directory containing suite descriptor JSON files. Default: {@code src/main/resources/suites}.
+     * Name of the source set the suites and custom components live in. Its output and runtime
+     * classpath are what the SUTs and components are loaded from, so a library can keep them in a
+     * dedicated source set (for example {@code pbt}) next to its own code. The source set must
+     * exist when the task runs. Default: {@code main}.
+     */
+    public abstract Property<String> getSourceSet();
+
+    /**
+     * Directory containing suite descriptor JSON files. Default:
+     * {@code src/<sourceSet>/resources/suites}.
      */
     public abstract DirectoryProperty getSuiteDir();
 

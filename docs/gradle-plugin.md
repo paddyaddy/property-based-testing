@@ -21,7 +21,7 @@ plugins {
 }
 ```
 
-The plugin requires the `java` plugin to be applied (it reads the main source set's output classpath).
+The plugin requires the `java` plugin to be applied (it reads a source set's output and runtime classpath, `main` by default).
 
 ## Configuration
 
@@ -37,7 +37,8 @@ pbt {
 
 | Property | Default | Meaning |
 |---|---|---|
-| `suiteDir` | `src/main/resources/suites` | directory scanned for `**/*.json` descriptor files |
+| `sourceSet` | `main` | source set whose output and runtime classpath SUTs and custom components are loaded from; must exist when the task runs |
+| `suiteDir` | `src/<sourceSet>/resources/suites` | directory scanned for `**/*.json` descriptor files |
 | `runsPerProperty` | `100` | number of inputs generated per property |
 | `maxShrinkSteps` | `1000` | maximum candidates evaluated while minimizing one witness |
 | `seed` | `42` | master random seed for all generators |
@@ -49,7 +50,7 @@ witness (as a string) when the property failed.
 
 ## The `propertyBasedTests` task
 
-The task is in the `verification` group and is automatically added to the `check` lifecycle, so `./gradlew check` runs it. It **always re-runs** regardless of whether inputs changed (equivalent to `outputs.upToDateWhen { false }`).
+The task is in the `verification` group. The plugin makes `test` depend on it, so `./gradlew test` and `./gradlew check` run it. It **always re-runs** regardless of whether inputs changed (equivalent to `outputs.upToDateWhen { false }`).
 
 At execution time it:
 
@@ -62,6 +63,8 @@ At execution time it:
 7. Throws a `GradleException` listing all failing properties if any exist.
 
 ## IDE test output
+
+The task sets the extra property `idea.internal.test = true`. IntelliJ treats a task as a test task, and shows its results in the test tree, only if it extends Gradle's `Test` or carries this property. After upgrading the plugin, reload the Gradle project in the IDE so the flag is picked up.
 
 When a test is selected in the IDE's test view, clicking on a SUT group shows the full descriptor configuration (suite name, generator, SUT spec, runs per property, seed). Clicking on an individual property shows:
 
@@ -95,9 +98,61 @@ src/main/resources/
 
 Both directories end up on the main source set's resource path and are visible to the context classloader during the task.
 
+## Using it in a library, like a test dependency
+
+A library keeps its suites, ASP programs and custom components in a source set of their own, next to `main` and `test`, so that they never mix with the library's unit tests:
+
+```groovy
+// build.gradle
+plugins {
+    id 'java'
+    id 'org.tugraz.pbt'
+}
+
+sourceSets {
+    pbt {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+dependencies {
+    pbtCompileOnly 'org.tugraz.pbt:pbt-pipeline:0.1.0'   // only if the source set has its own components
+}
+
+pbt {
+    sourceSet = 'pbt'
+}
+```
+
+```
+src/pbt/
+  java/                          custom generators, renderers, ... (optional)
+  resources/
+    META-INF/services/           their registrations
+    asp/                         relation programs
+    suites/                      suite descriptors
+```
+
+A SUT is then simply a class of the library itself (`"class": "org.example.Foo"`, no `classpath`), and `propertyBasedTests` shows up in the IDE's Gradle view like any other task. To run the same suites against two versions of the library, check out the revision and run the task again.
+
 ## Adding custom components
 
 Put a provider implementation and its `META-INF/services/` entry on the project's `runtimeClasspath`. The task's URLClassLoader inherits from the plugin's classloader (which has all builtin providers), so your provider is discovered alongside the builtins without any framework edit.
+
+To compile your own provider against the SPI contracts (`pbt.spi.*`), the project needs `pbt-pipeline` on its compile classpath. With the framework as an included build, declare the include at the top level of `settings.gradle` (not only in `pluginManagement`) so the dependency can be substituted:
+
+```groovy
+// settings.gradle
+includeBuild '../pbt/framework'
+
+// build.gradle
+dependencies {
+    compileOnly 'org.tugraz.pbt:pbt-pipeline:0.1.0'
+}
+```
+
+A type that is not built in needs one provider per concern, all with the same short name: a generator, a `ValueTypeProvider` (required) and, optionally, a shrinker and an `AspFactGeneratorProvider`. When the type is only a variation of a built-in one, the suite's `"factGenerator"` can name an existing fact generator instead.
 
 Example — adding a custom generator:
 

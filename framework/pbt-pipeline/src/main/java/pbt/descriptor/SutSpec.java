@@ -2,6 +2,7 @@ package pbt.descriptor;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -47,5 +48,16 @@ public record SutSpec(
             String interpreter,
             String outputType) {
         this(type, className, method, isStatic, args, file, timeoutSeconds, interpreter, outputType, null);
+    }
+
+    /**
+     * Returns a copy whose relative {@code file} and {@code classpath} entries are resolved against
+     * {@code baseDir}, so a descriptor means the same thing wherever the process happens to run.
+     */
+    public SutSpec resolvedAgainst(Path baseDir) {
+        return new SutSpec(type, className, method, isStatic, args,
+                file == null ? null : baseDir.resolve(file).toString(),
+                timeoutSeconds, interpreter, outputType,
+                classpath == null ? null : classpath.stream().map(e -> baseDir.resolve(e).toString()).toList());
     }
 }

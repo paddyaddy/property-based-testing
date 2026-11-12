@@ -79,12 +79,13 @@ See [docs/suite-descriptor.md](docs/suite-descriptor.md) for the full field refe
 ./gradlew propertyBasedTests
 ```
 
-The task is also wired into `check`, so `./gradlew check` runs it. Results land in `build/reports/pbt/<suite>/<sut>/<propertyId>.json`.
+The task is also wired into `test`, so `./gradlew test` and `./gradlew check` run it. Results land in `build/reports/pbt/<suite>/<sut>/<propertyId>.json`.
 
 ### Optional configuration
 
 ```groovy
 pbt {
+    sourceSet        = 'main'      // or a dedicated source set such as 'pbt'
     suiteDir         = layout.projectDirectory.dir('src/main/resources/suites')
     runsPerProperty  = 200
     seed             = 12345L

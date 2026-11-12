@@ -158,6 +158,8 @@ All optional fields shown, with inline explanation in comments
 | `outputType` | non-java | Value-type key for deserializing the SUT's output |
 | `classpath` | no | java: directories and jars to load the SUT class from. The SUT gets a classloader of its own that prefers these entries over the project's classpath, so two SUTs can use different versions of the same class name, e.g. a buggy and a fixed build of a library. Entries must exist |
 
+Relative `file` and `classpath` entries are resolved against the project directory (the directory of the build that applies the plugin).
+
 ### `GeneratorSpec`
 
 | Field | Required | Default | Description |

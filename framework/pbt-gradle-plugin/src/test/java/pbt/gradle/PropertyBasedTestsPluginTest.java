@@ -98,6 +98,70 @@ class PropertyBasedTestsPluginTest {
     }
 
     @Test
+    void suites_and_components_can_live_in_a_dedicated_source_set() throws IOException {
+        write("build.gradle", """
+                plugins {
+                    id 'java'
+                    id 'org.tugraz.pbt'
+                }
+                sourceSets {
+                    pbt {
+                        compileClasspath += sourceSets.main.output
+                        runtimeClasspath += sourceSets.main.output
+                    }
+                }
+                pbt {
+                    sourceSet = 'pbt'
+                    runsPerProperty = 10
+                }
+                """);
+        write("src/pbt/resources/suites/abs.json", """
+                {
+                  "name": "abs",
+                  "suts": { "p": { "type": "java", "class": "sut.Numbers", "method": "abs", "static": true } },
+                  "generator": { "kind": "int" },
+                  "properties": [ { "id": "always", "type": "INVARIANT", "validator": { "kind": "trivial" } } ]
+                }
+                """);
+
+        BuildResult result = runner("propertyBasedTests").build();
+
+        assertTrue(result.getOutput().contains("[abs/p] PASSED"), result.getOutput());
+    }
+
+    @Test
+    void task_is_marked_as_a_test_task_for_intellij() throws IOException {
+        write("build.gradle", """
+                plugins {
+                    id 'java'
+                    id 'org.tugraz.pbt'
+                }
+                tasks.register('showFlag') {
+                    doLast { println "flag=" + tasks.getByName('propertyBasedTests').extensions.extraProperties['idea.internal.test'] }
+                }
+                """);
+
+        BuildResult result = runner("showFlag").build();
+
+        assertTrue(result.getOutput().contains("flag=true"), result.getOutput());
+    }
+
+    @Test
+    void unknown_source_set_is_reported() throws IOException {
+        write("build.gradle", """
+                plugins {
+                    id 'java'
+                    id 'org.tugraz.pbt'
+                }
+                pbt { sourceSet = 'nope' }
+                """);
+
+        BuildResult result = runner("propertyBasedTests").buildAndFail();
+
+        assertTrue(result.getOutput().contains("pbt.sourceSet 'nope' does not exist"), result.getOutput());
+    }
+
+    @Test
     void failing_property_fails_the_build_and_reports_a_witness() throws IOException {
         assumeTrue(clingoAvailable(), "clingo not on PATH");
         write("src/main/resources/suites/abs.json", """

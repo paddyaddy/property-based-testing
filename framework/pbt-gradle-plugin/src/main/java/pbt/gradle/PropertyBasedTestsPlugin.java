@@ -1,7 +1,9 @@
 package pbt.gradle;
 
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.testing.TestReport;
@@ -15,8 +17,9 @@ public class PropertyBasedTestsPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         PbtExtension ext = project.getExtensions().create("pbt", PbtExtension.class);
-        ext.getSuiteDir().convention(
-                project.getLayout().getProjectDirectory().dir("src/main/resources/suites"));
+        ext.getSourceSet().convention("main");
+        ext.getSuiteDir().convention(ext.getSourceSet().map(name ->
+                project.getLayout().getProjectDirectory().dir("src/" + name + "/resources/suites")));
         ext.getRunsPerProperty().convention(100);
         ext.getSeed().convention(42L);
         ext.getMaxShrinkSteps().convention(PipelineRunner.DEFAULT_MAX_SHRINK_STEPS);
@@ -24,6 +27,9 @@ public class PropertyBasedTestsPlugin implements Plugin<Project> {
         var pbTask = project.getTasks().register("propertyBasedTests",
                 PropertyBasedTestsTask.class, task -> {
                     task.setGroup("verification");
+                    // IntelliJ only shows a test tree for tasks it recognizes as test tasks, which for
+                    // a task that is not a Gradle Test task means this extra property.
+                    task.getExtensions().getExtraProperties().set("idea.internal.test", true);
                     task.setDescription("Runs data-driven property-based tests declared in descriptors.");
 
                     task.getSuiteFiles().from(ext.getSuiteDir().map(dir ->
@@ -31,13 +37,18 @@ public class PropertyBasedTestsPlugin implements Plugin<Project> {
 
                     SourceSetContainer sourceSets = project.getExtensions()
                             .getByType(SourceSetContainer.class);
-                    SourceSet main = sourceSets.getByName("main");
-                    task.getSutClasspath().from(main.getOutput());
-                    task.getSutClasspath().from(project.getConfigurations().named("runtimeClasspath"));
-                    task.dependsOn(
-                            project.getTasks().named("compileJava"),
-                            project.getTasks().named("processResources"));
+                    Provider<SourceSet> sourceSet = ext.getSourceSet().map(name -> {
+                        SourceSet found = sourceSets.findByName(name);
+                        if (found == null) {
+                            throw new GradleException("pbt.sourceSet '" + name + "' does not exist");
+                        }
+                        return found;
+                    });
+                    task.getSutClasspath().from(sourceSet.map(SourceSet::getOutput));
+                    task.getSutClasspath().from(sourceSet.map(SourceSet::getRuntimeClasspath));
+                    task.dependsOn(sourceSet.map(SourceSet::getOutput));
 
+                    task.getBaseDir().set(project.getLayout().getProjectDirectory());
                     task.getRunsPerProperty().set(ext.getRunsPerProperty());
                     task.getSeed().set(ext.getSeed());
                     task.getMaxShrinkSteps().set(ext.getMaxShrinkSteps());
