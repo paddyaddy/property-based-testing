@@ -73,7 +73,7 @@ The `Registry<P extends NamedProvider>` discovers implementations via `ServiceLo
 ### `SutRunner`
 | | |
 |---|---|
-| **Contract** | `Object run(Object input)` — executes one SUT call and returns the output. |
+| **Contract** | `Object run(Object input)` — executes one SUT call and returns the output. A failure of the SUT itself is signalled with a `SutException` carrying the exception type; any other exception aborts the run. |
 | **Use case** | Decouples the pipeline from any specific execution mechanism (local JVM method, subprocess, network call, …). The pipeline calls this for every generated input and captures the result in `CheckContext`. |
 
 ### `SutRunnerProvider`
@@ -103,7 +103,7 @@ The `Registry<P extends NamedProvider>` discovers implementations via `ServiceLo
 ### `CheckContext` (record)
 | | |
 |---|---|
-| **Fields** | `sourceInput`, `sourceOutput`, `followUpInput`, `followUpOutput` — all `Object`, nulls until the SUT executes or for invariant properties. |
+| **Fields** | `sourceInput`, `sourceOutput`, `followUpInput`, `followUpOutput` — all `Object`, nulls until the SUT executes or for invariant properties. `sourceException` and `followUpException` are `String`s naming the exception the SUT raised for that execution (the matching output is then `null`), or null. |
 | **Use case** | Carries all execution data into a validator. Convenience factories: `invariant(input)`, `metamorphic(source, followUp)`. |
 
 ---

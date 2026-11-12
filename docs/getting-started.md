@@ -34,8 +34,11 @@ cd demo
 ./gradlew propertyBasedTests
 ```
 
-This runs six demo suites (`sort`, `sort_python`, `abs_long`, `abs_double`, `not_bool`,
-`reverse_string`). Each suite has a `reference` SUT, which passes, and a deliberately
-buggy SUT, whose failing properties are reported with a minimized witness. The build
-therefore fails by design; the failures are the expected result of the demo.
+This runs eight demo suites (`sort`, `sort_python`, `abs_long`, `abs_double`, `not_bool`,
+`reverse_string`, `find_first`, `safe_division`). Each suite has a `reference` SUT, which passes, and a
+deliberately buggy SUT, whose failing properties are reported with a minimized witness.
+`find_first` shows a SUT with two parameters (a `tuple` generator). `safe_division` has two
+SUTs, one that throws on a zero divisor and one that returns 0, each checked against both
+expectations, so each fails exactly one of them. The build therefore fails by design; the
+failures are the expected result of the demo.
 Requires `clingo` on `PATH` for the ASP-backed properties and `python3` for `sort_python`.

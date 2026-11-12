@@ -62,7 +62,7 @@ Newline-delimited JSON, one request line answered by exactly one response line:
 ← {"output": "ababab"}
 
 → {"input": null}
-← {"error": "<exception message>"}
+← {"error": "<exception message>", "type": "<exception class name>"}
 ```
 
 A SUT with several parameters (a `tuple` input) receives `{"args": [...]}` and the harness calls the
@@ -71,8 +71,8 @@ function with the list spread as positional arguments; every other input arrives
 - The input is the generated Java value serialized with Gson. The output is
   deserialized with the Java type of `outputType`.
 - A Python exception while running the SUT, or a malformed request, produces an
-  `{"error": ...}` line. The Java runner turns it into a `RuntimeException`
-  (`Python SUT error: ...`).
+  `{"error": ..., "type": ...}` line. The Java runner turns it into a `SutException`
+  (`Python SUT error: ...`) that carries the type, so the oracle sees it as an exception fact.
 - If the worker exits unexpectedly, the runner fails with the captured stderr.
 - stdout is reserved for the protocol, so a SUT must not print to it. Use stderr for debugging.
 - EOF on stdin ends the worker. Without `--server` the harness runs once:

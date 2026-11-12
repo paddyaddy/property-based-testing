@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import pbt.descriptor.SutSpec;
 import pbt.spi.Registry;
+import pbt.spi.sut.SutException;
 import pbt.spi.sut.SutRunner;
 import pbt.spi.sut.SutRunnerProvider;
 import pbt.spi.type.Tuple;
@@ -171,7 +172,7 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
             } catch (TimeoutException e) {
                 String stderr = stderr();
                 kill();
-                throw new RuntimeException("Python SUT call timed out after " + timeoutSeconds
+                throw new SutException("Timeout", "Python SUT call timed out after " + timeoutSeconds
                         + "s; the worker was killed and restarts on the next call"
                         + (stderr.isEmpty() ? "" : "; stderr: " + stderr));
             } catch (InterruptedException e) {
@@ -190,7 +191,8 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
             }
             JsonObject json = gson.fromJson(responseJson, JsonObject.class);
             if (json.has("error")) {
-                throw new RuntimeException("Python SUT error: " + json.get("error").getAsString());
+                String type = json.has("type") ? json.get("type").getAsString() : "Exception";
+                throw new SutException(type, "Python SUT error: " + json.get("error").getAsString());
             }
             return gson.fromJson(json.get("output"), outputType);
         }

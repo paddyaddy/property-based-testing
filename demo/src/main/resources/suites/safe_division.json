@@ -1,0 +1,48 @@
+{
+  "name": "safe_division",
+  "description": "Two division SUTs, one that throws on a zero divisor and one that returns 0, checked against both expectations",
+  "suts": {
+    "nonThrowing": {
+      "type": "java",
+      "class": "demo.math.SafeDivision",
+      "method": "nonThrowingDivide(Integer, Integer)",
+      "static": true
+    },
+    "throwing": {
+      "type": "java",
+      "class": "demo.math.SafeDivision",
+      "method": "throwingDivide(Integer, Integer)",
+      "static": true
+    }
+  },
+  "generator": {
+    "kind": "tuple",
+    "params": {
+      "components": [
+        { "kind": "int", "params": { "min": -9, "max": 9 } },
+        { "kind": "int", "params": { "min": -3, "max": 3 } }
+      ]
+    }
+  },
+  "outputKind": "int",
+  "properties": [
+    {
+      "id": "D1_quotient",
+      "type": "INVARIANT",
+      "description": "for a non-zero divisor the result is the truncated quotient (both SUTs pass)",
+      "validator": { "kind": "asp", "relation": "asp/division_quotient.lp" }
+    },
+    {
+      "id": "D2_zero_divisor_throws",
+      "type": "INVARIANT",
+      "description": "dividing by 0 raises ArithmeticException (passes for throwing, fails for nonThrowing)",
+      "validator": { "kind": "asp", "relation": "asp/divide_by_zero_throws.lp" }
+    },
+    {
+      "id": "D3_zero_divisor_does_not_throw",
+      "type": "INVARIANT",
+      "description": "dividing by 0 raises no exception (passes for nonThrowing, fails for throwing)",
+      "validator": { "kind": "asp", "relation": "asp/divide_by_zero_does_not_throw.lp" }
+    }
+  ]
+}

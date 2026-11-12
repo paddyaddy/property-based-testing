@@ -13,7 +13,7 @@ cd demo
 ./gradlew propertyBasedTests
 ```
 
-The demo runs all suite descriptors under `demo/src/main/resources/suites/` against their reference and buggy SUTs. Expect the reference SUTs to pass and the buggy ones to fail with a minimized witness.
+The demo runs all suite descriptors under `demo/src/main/resources/suites/` against their SUTs. Expect the reference SUTs to pass and the buggy ones to fail with a minimized witness (`safe_division` has no reference: its two SUTs each fail one of two opposite properties).
 
 To also generate an HTML report:
 

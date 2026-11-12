@@ -35,6 +35,7 @@ Add a `"validator"` object to a property with `"kind": "asp"` and a `"relation"`
 | `violation` | no | `"violation"` | the query atom |
 | `failureSignature` | no | value of `violation` | label recorded in `PropertyResult` on failure |
 | `scale` | no | `1000` | fixed-point scale for `double` values: fact = round(value × scale) |
+| `failOnException` | no | `false` | fail every execution in which the SUT raised an exception, with the signature `exception:<type>`, without running the program |
 
 The `"relation"` value is resolved via the context classloader, so placing the file under `src/main/resources/asp/` makes it available at both test time and Gradle task time.
 
@@ -73,6 +74,8 @@ out(1, 1).  % out[1] = 1
 ```
 
 A `tuple` input renders each component with the fact generator of its kind and the position appended to the prefix: `in_0(V).`, `in_1(0, V).`, and so on. Outputs are rendered by the `outputKind` fact generator when the suite sets one, otherwise like inputs.
+
+When the SUT raises an exception, the `out` facts are absent and one fact names the exception type: `exception("java.lang.NullPointerException").` (`source_exception(...)` and `followup_exception(...)` for metamorphic properties). A program can therefore require or forbid specific exceptions, for example `violation :- exception(_).` or `violation :- in(N), N < 0, not exception("java.lang.NumberFormatException").` Python SUTs report the unqualified class name, such as `"ValueError"`, and `"Timeout"` when a call exceeds `timeoutSeconds`. Without `failOnException` an exception only matters if the program looks at it.
 
 ## Writing a `.lp` file
 

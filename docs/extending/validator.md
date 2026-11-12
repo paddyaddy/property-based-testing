@@ -25,7 +25,9 @@ public final class SortedOutputValidatorProvider implements ValidatorProvider {
 ```
 
 - `CheckContext` carries `sourceInput`, `sourceOutput`, `followUpInput`, `followUpOutput`.
-  The follow-up fields are `null` for invariant properties.
+  The follow-up fields are `null` for invariant properties. When the SUT raised an exception
+  on an execution, its output is `null` and `sourceException` / `followUpException` name the
+  exception type (otherwise they are `null`).
 - A validator that needs more than the generator name, for example the generator params or
   the suite's `outputKind`, overrides `build(JsonObject params, SuiteDescriptor suite)`
   instead; the pipeline calls that one.

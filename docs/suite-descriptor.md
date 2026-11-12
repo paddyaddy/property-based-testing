@@ -184,6 +184,7 @@ All optional fields shown, with inline explanation in comments
 | `relation` | yes | — | Classpath path to the `.lp` relation program |
 | `violation` | no | `"violation"` | Query atom that signals a broken property |
 | `failureSignature` | no | violation atom | Override failure label inside the validator |
+| `failOnException` | no | `false` | Fail every execution in which the SUT raised an exception, with the signature `exception:<type>`, without consulting the program |
 
 ---
 

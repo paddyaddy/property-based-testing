@@ -1,11 +1,13 @@
 package pbt.components.sut;
 
 import pbt.descriptor.SutSpec;
+import pbt.spi.sut.SutException;
 import pbt.spi.sut.SutRunner;
 import pbt.spi.sut.SutRunnerProvider;
 import pbt.spi.type.Tuple;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -134,6 +136,9 @@ public final class JavaSutRunnerProvider implements SutRunnerProvider {
             try {
                 Object target = instanceConstructor == null ? null : instanceConstructor.newInstance();
                 return method.invoke(target, arguments(method, input));
+            } catch (InvocationTargetException e) {
+                Throwable raised = e.getCause();
+                throw new SutException(raised.getClass().getName(), raised.getMessage(), raised);
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException("SUT invocation failed: " + cls.getName() + "#" + methodName, e);
             }

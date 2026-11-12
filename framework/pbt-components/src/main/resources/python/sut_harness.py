@@ -10,7 +10,7 @@ the named file as a module, resolves the callable named by ``--target``, and the
 serves newline-delimited JSON requests on stdin (``{"input": ...}``, or ``{"args": [...]}``
 for a callable with several parameters, which receives the list spread as positional
 arguments), answering each
-with one line on stdout (``{"output": ...}`` or ``{"error": "..."}``) until stdin
+with one line on stdout (``{"output": ...}`` or ``{"error": "...", "type": "..."}``) until stdin
 closes.
 
 Without ``--server`` the harness runs in single-shot mode: it reads one JSON input
@@ -169,7 +169,7 @@ def _server_loop(fn):
     """Persistent worker loop: read JSON-line requests, write JSON-line responses.
 
     Request:  {"input": <json>}  or  {"args": [<json>, ...]}
-    Response: {"output": <json>}  or  {"error": "<message>"}
+    Response: {"output": <json>}  or  {"error": "<message>", "type": "<exception class>"}
 
     Exits cleanly on EOF (stdin closed by the runner).
     """
@@ -188,7 +188,7 @@ def _server_loop(fn):
             result = fn(*args)
             sys.stdout.write(json.dumps({"output": result}) + "\n")
         except Exception as exc:
-            sys.stdout.write(json.dumps({"error": str(exc)}) + "\n")
+            sys.stdout.write(json.dumps({"error": str(exc), "type": type(exc).__name__}) + "\n")
         sys.stdout.flush()
 
 

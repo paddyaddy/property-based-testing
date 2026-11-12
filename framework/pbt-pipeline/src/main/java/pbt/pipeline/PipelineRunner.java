@@ -15,6 +15,7 @@ import pbt.spi.generator.Generator;
 import pbt.spi.generator.GeneratorProvider;
 import pbt.spi.shrinker.Shrinker;
 import pbt.spi.shrinker.ShrinkerProvider;
+import pbt.spi.sut.SutException;
 import pbt.spi.sut.SutRunner;
 import pbt.spi.transform.Transform;
 import pbt.spi.transform.TransformProvider;
@@ -125,13 +126,19 @@ public final class PipelineRunner {
             sb.append("  sourceInput:    ").append(ctx.sourceInput()).append("\n");
             if (ctx.sourceOutput() != null)
                 sb.append("  sourceOutput:   ").append(ctx.sourceOutput()).append("\n");
+            if (ctx.sourceException() != null)
+                sb.append("  sourceException: ").append(ctx.sourceException()).append("\n");
             sb.append("  followUpInput:  ").append(ctx.followUpInput()).append("\n");
             if (ctx.followUpOutput() != null)
                 sb.append("  followUpOutput: ").append(ctx.followUpOutput()).append("\n");
+            if (ctx.followUpException() != null)
+                sb.append("  followUpException: ").append(ctx.followUpException()).append("\n");
         } else {
             sb.append("  input:  ").append(ctx.sourceInput()).append("\n");
             if (ctx.sourceOutput() != null)
                 sb.append("  output: ").append(ctx.sourceOutput()).append("\n");
+            if (ctx.sourceException() != null)
+                sb.append("  exception: ").append(ctx.sourceException()).append("\n");
         }
         if (!result.diagnostics().isEmpty()) {
             sb.append("facts:\n").append(result.diagnostics().trim()).append("\n");
@@ -149,6 +156,8 @@ public final class PipelineRunner {
         Object sourceOutput = null;
         Object followUpInput = null;
         Object followUpOutput = null;
+        String sourceException = null;
+        String followUpException = null;
 
         if (isMetamorphic) {
             followUpInput = transform.apply(input, transformRng);
@@ -156,16 +165,19 @@ public final class PipelineRunner {
         if (sutRunner != null) {
             try {
                 sourceOutput = sutRunner.run(input);
-            } catch (RuntimeException ignored) {
+            } catch (SutException e) {
+                sourceException = e.exceptionType();
             }
             if (isMetamorphic) {
                 try {
                     followUpOutput = sutRunner.run(followUpInput);
-                } catch (RuntimeException ignored) {
+                } catch (SutException e) {
+                    followUpException = e.exceptionType();
                 }
             }
         }
-        return new CheckContext(input, sourceOutput, followUpInput, followUpOutput);
+        return new CheckContext(input, sourceOutput, followUpInput, followUpOutput,
+                sourceException, followUpException);
     }
 
     private static Object minimize(

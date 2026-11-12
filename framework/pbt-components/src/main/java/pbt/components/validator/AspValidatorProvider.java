@@ -25,6 +25,8 @@ import java.util.ServiceLoader;
  * field overrides the default query atom {@code "violation"}, and
  * {@code "failureSignature"} overrides the default failure label. Other fields are
  * passed to the fact renderer (for example {@code "scale"} for {@code double} values).
+ * With {@code "failOnException": true} an execution in which the SUT raised an exception fails
+ * with the signature {@code exception:<type>} without consulting the program.
  * The solver is the first {@link AspEngine} service found, falling back to
  * {@link CliAspEngine}.
  *
@@ -34,6 +36,9 @@ import java.util.ServiceLoader;
  * <pre>  toFacts(sourceInput, "source_in") + toFacts(sourceOutput, "source_out")
  *   + toFacts(followUpInput, "followup_in") + toFacts(followUpOutput, "followup_out")
  *   + relationProgram</pre>
+ * When the SUT raised an exception its output facts are absent and one fact names the type:
+ * {@code exception("java.lang.NullPointerException").}, or {@code source_exception(...)} and
+ * {@code followup_exception(...)} for metamorphic properties.
  */
 public final class AspValidatorProvider implements ValidatorProvider {
 
@@ -45,15 +50,27 @@ public final class AspValidatorProvider implements ValidatorProvider {
         this.factGenerators = Registry.load(AspFactGeneratorProvider.class);
     }
 
+    private static String exceptionFact(String type, String predicate) {
+        if (type == null) return "";
+        return predicate + "(\"" + type.replace("\\", "\\\\").replace("\"", "\\\"") + "\").\n";
+    }
+
     private static String buildFacts(CheckContext ctx, AspFactGeneratorProvider in, AspFactGeneratorProvider out) {
         if (ctx.followUpInput() != null) {
             return in.toFacts(ctx.sourceInput(), "source_in")
                     + out.toFacts(ctx.sourceOutput(), "source_out")
+                    + exceptionFact(ctx.sourceException(), "source_exception")
                     + in.toFacts(ctx.followUpInput(), "followup_in")
-                    + out.toFacts(ctx.followUpOutput(), "followup_out");
+                    + out.toFacts(ctx.followUpOutput(), "followup_out")
+                    + exceptionFact(ctx.followUpException(), "followup_exception");
         }
         return in.toFacts(ctx.sourceInput(), "in")
-                + out.toFacts(ctx.sourceOutput(), "out");
+                + out.toFacts(ctx.sourceOutput(), "out")
+                + exceptionFact(ctx.sourceException(), "exception");
+    }
+
+    private static boolean flag(JsonObject params, String key) {
+        return params != null && params.has(key) && params.get(key).getAsBoolean();
     }
 
     private static String loadRelation(JsonObject params) {
@@ -111,8 +128,13 @@ public final class AspValidatorProvider implements ValidatorProvider {
         String violationAtom = stringOrDefault(params, "violation", "violation");
         String defaultSignature = stringOrDefault(params, "failureSignature", violationAtom);
 
+        boolean failOnException = flag(params, "failOnException");
         return ctx -> {
             String facts = buildFacts(ctx, in, out);
+            String raised = ctx.sourceException() != null ? ctx.sourceException() : ctx.followUpException();
+            if (failOnException && raised != null) {
+                return CheckResult.fail("exception:" + raised, facts);
+            }
             String program = facts + "\n" + relation;
             if (engine.entails(program, violationAtom)) {
                 return CheckResult.fail(defaultSignature, facts);

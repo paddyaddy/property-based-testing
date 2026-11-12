@@ -31,11 +31,11 @@ For a `METAMORPHIC` property, `Transform.apply(source, rnd)` turns each source i
 
 `SutRunner.run(input)` is called on the source input to produce `sourceOutput`. For metamorphic properties it is also called on the follow-up input to produce `followUpOutput`. If no `SutRunner` is configured (e.g. when using the trivial validator in unit tests), both outputs remain `null`.
 
-Exceptions from the runner are caught and leave the corresponding output as `null`.
+When the SUT itself fails (it raises an exception or error, or a Python call times out), the runner throws a `SutException`. The pipeline records the exception type, leaves the corresponding output `null`, and passes the type to the validator in `sourceException` / `followUpException`. Any other exception from a runner (wrong arity, a dead worker process) is a wiring problem and aborts the run with its message.
 
 ### Validate
 
-`Validator.check(CheckContext)` decides pass or fail for one check. The context carries all four values:
+`Validator.check(CheckContext)` decides pass or fail for one check. The context carries these values:
 
 | Field | Invariant | Metamorphic |
 |---|---|---|
@@ -43,6 +43,8 @@ Exceptions from the runner are caught and leave the corresponding output as `nul
 | `sourceOutput` | SUT output (or null) | SUT output for source input |
 | `followUpInput` | null | the transformed input |
 | `followUpOutput` | null | SUT output for follow-up input |
+| `sourceException` | exception type the SUT raised, or null | same, for the source input |
+| `followUpException` | null | same, for the follow-up input |
 
 The validator returns `CheckResult(passed, signature, diagnostics)`. On failure the signature is recorded. `diagnostics` is a free-form string filled by the validator (e.g. the assembled ASP facts); it is empty for validators that produce no extra detail.
 
