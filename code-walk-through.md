@@ -10,6 +10,8 @@ Paths are relative to the repo root; `F/` = `framework/`, `C/` = `F/pbt-componen
 - `demo/src/main/resources/suites/sort_python.json`: same `.lp` files, Python SUT. Only `suts` differs.
 - `demo/src/main/resources/suites/find_first.json`: a two-parameter SUT (`tuple` generator, `outputKind`).
 - `demo/src/main/resources/suites/safe_division.json`: SUT exceptions seen by the oracle.
+- `demo/src/main/resources/suites/reverse_string_python.json`: a Python SUT inside a package, imported by
+  `module` from a `searchPath`.
 
 ## 1. Gradle entry point and classloading
 
@@ -47,16 +49,17 @@ Paths are relative to the repo root; `F/` = `framework/`, `C/` = `F/pbt-componen
 
 ## 4. Executing the SUT (execution side)
 
-- Java, `C/sut/JavaSutRunnerProvider.java`: class and method resolved once (`:185`, `findMethod` at
-  `:79`, which also selects overloads by parameter types), then `method.invoke` per input (`:216`).
-  `arguments` (`:104`) spreads a `Tuple` input over the parameters. An exception thrown by the SUT
-  becomes a `SutException` carrying its type (`:219`). With a `classpath` in the SUT spec the class is
-  loaded by a `ChildFirstClassLoader` (`:143`, created at `:182`), so two versions of one class can coexist.
-- Python, `C/sut/PythonSutRunnerProvider.java:103`: one persistent worker per SUT; `run` (`:154`) sends one JSON line
-  (`{"input": ...}` or `{"args": [...]}` for a tuple) and reads one back, with a per-call timeout; output
-  deserialised via the value type (`:197`). Errors and timeouts become `SutException`.
-- Other side: `F/pbt-components/src/main/resources/python/sut_harness.py:168` (`_server_loop`):
-  module loaded once, `fn(*args)` per line (`:188`).
+- Java, `C/sut/JavaSutRunnerProvider.java`: class and method resolved once (`:184`, `findMethod` at
+  `:78`, which also selects overloads by parameter types), then `method.invoke` per input (`:215`).
+  `arguments` (`:103`) spreads a `Tuple` input over the parameters. An exception thrown by the SUT
+  becomes a `SutException` carrying its type (`:218`). With a `searchPath` in the SUT spec the class is
+  loaded by a `ChildFirstClassLoader` (`:142`, created at `:181`), so two versions of one class can coexist.
+- Python, `C/sut/PythonSutRunnerProvider.java:104`: one persistent worker per SUT, started with a `--file`
+  or `--module` and the `searchPath` entries (`buildCommand`, `:45`) in the SUT's `workingDir`; `run` (`:175`)
+  sends one JSON line (`{"input": ...}` or `{"args": [...]}` for a tuple) and reads one back, with a per-call
+  timeout; output deserialised via the value type (`:220`). Errors and timeouts become `SutException`.
+- Other side: `F/pbt-components/src/main/resources/python/sut_harness.py`: search path set (`:252`), file or
+  module loaded once (`:256`), then `_server_loop` (`:182`) calls `fn(*args)` per line (`:202`).
 
 ## 5. Values → ASP → verdict (logic side)
 

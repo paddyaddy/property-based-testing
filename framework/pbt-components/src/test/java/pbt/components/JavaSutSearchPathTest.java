@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SutClasspathTest {
+class JavaSutSearchPathTest {
 
     private static final String CLASS_NAME = "pbt.components.fixture.Versioned";
 
@@ -34,9 +34,9 @@ class SutClasspathTest {
         return classes;
     }
 
-    private static SutRunner runner(List<String> classpath) {
+    private static SutRunner runner(List<String> searchPath) {
         return new JavaSutRunnerProvider().build(new SutSpec("java", CLASS_NAME, "version(String)", true,
-                null, null, null, null, null, classpath));
+                null, null, null, null, null).withSearchPath(searchPath));
     }
 
     @Test
@@ -55,7 +55,7 @@ class SutClasspathTest {
     }
 
     @Test
-    void classpath_wins_over_the_project_classpath(@TempDir Path tmp) throws IOException {
+    void search_path_wins_over_the_project_classpath(@TempDir Path tmp) throws IOException {
         SutRunner isolated = runner(List.of(compileVersion(tmp, "other").toString()));
         try {
             assertEquals("other:x", isolated.run("x"));
@@ -66,15 +66,15 @@ class SutClasspathTest {
     }
 
     @Test
-    void missing_classpath_entry_is_reported() {
+    void missing_search_path_entry_is_reported() {
         var e = assertThrows(IllegalArgumentException.class, () -> runner(List.of("/does/not/exist")));
         assertTrue(e.getMessage().contains("/does/not/exist"), e.getMessage());
     }
 
     @Test
-    void class_not_on_the_classpath_is_reported(@TempDir Path tmp) {
+    void class_not_on_the_search_path_is_reported(@TempDir Path tmp) {
         var spec = new SutSpec("java", "pbt.components.fixture.Missing", "version(String)", true,
-                null, null, null, null, null, List.of(tmp.toString()));
+                null, null, null, null, null).withSearchPath(List.of(tmp.toString()));
 
         var e = assertThrows(IllegalArgumentException.class, () -> new JavaSutRunnerProvider().build(spec));
         assertTrue(e.getMessage().contains("not found"), e.getMessage());

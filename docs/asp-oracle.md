@@ -75,7 +75,7 @@ out(1, 1).  % out[1] = 1
 
 A `tuple` input renders each component with the fact generator of its kind and the position appended to the prefix: `in_0(V).`, `in_1(0, V).`, and so on. Outputs are rendered by the `outputKind` fact generator when the suite sets one, otherwise like inputs.
 
-When the SUT raises an exception, the `out` facts are absent and one fact names the exception type: `exception("java.lang.NullPointerException").` (`source_exception(...)` and `followup_exception(...)` for metamorphic properties). A program can therefore require or forbid specific exceptions, for example `violation :- exception(_).` or `violation :- in(N), N < 0, not exception("java.lang.NumberFormatException").` Python SUTs report the unqualified class name, such as `"ValueError"`, and `"Timeout"` when a call exceeds `timeoutSeconds`. Without `failOnException` an exception only matters if the program looks at it.
+When the SUT raises an exception, the `out` facts are absent and one fact names the exception type: `exception("java.lang.NullPointerException").` (`source_exception(...)` and `followup_exception(...)` for metamorphic properties). A program can therefore require or forbid specific exceptions, for example `violation :- exception(_).` or `violation :- in(N), N < 0, not exception("java.lang.NumberFormatException").` Python SUTs report the class qualified by its module, such as `"youtube_dl.utils.ExtractorError"`, a built-in exception by its plain name, such as `"ValueError"`, and `"Timeout"` when a call exceeds `timeoutSeconds`. Without `failOnException` an exception only matters if the program looks at it.
 
 ## Sharing definitions with `#include`
 

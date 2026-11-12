@@ -128,7 +128,7 @@ public abstract class PropertyBasedTestsTask extends DefaultTask {
     public abstract ConfigurableFileCollection getSutClasspath();
 
     /**
-     * Directory that relative {@code file} and {@code classpath} entries of a SUT are resolved against.
+     * Directory that relative paths of a SUT ({@code file}, {@code searchPath}, ...) are resolved against.
      */
     @Internal
     public abstract DirectoryProperty getBaseDir();

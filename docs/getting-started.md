@@ -9,7 +9,7 @@
 - `clingo` is required for ASP-backed properties. Install it from
   [potassco.org/clingo](https://potassco.org/clingo/) and make sure it is on `PATH`.
   Tests that need the ASP oracle are skipped automatically when `clingo` is absent.
-- `python3` is required for the Python demo suite (`sort_python`) and for any Python SUT.
+- `python3` is required for the Python demo suites (`sort_python`, `reverse_string_python`) and for any Python SUT.
 
 ## Layout
 
@@ -34,11 +34,12 @@ cd demo
 ./gradlew propertyBasedTests
 ```
 
-This runs eight demo suites (`sort`, `sort_python`, `abs_long`, `abs_double`, `not_bool`,
-`reverse_string`, `find_first`, `safe_division`). Each suite has a `reference` SUT, which passes, and a
+This runs nine demo suites (`sort`, `sort_python`, `abs_long`, `abs_double`, `not_bool`,
+`reverse_string`, `reverse_string_python`, `find_first`, `safe_division`). Each suite has a `reference` SUT, which passes, and a
 deliberately buggy SUT, whose failing properties are reported with a minimized witness.
-`find_first` shows a SUT with two parameters (a `tuple` generator). `safe_division` has two
+`find_first` shows a SUT with two parameters (a `tuple` generator). `reverse_string_python`
+calls a function inside a Python package by its module name. `safe_division` has two
 SUTs, one that throws on a zero divisor and one that returns 0, each checked against both
 expectations, so each fails exactly one of them. The build therefore fails by design; the
 failures are the expected result of the demo.
-Requires `clingo` on `PATH` for the ASP-backed properties and `python3` for `sort_python`.
+Requires `clingo` on `PATH` for the ASP-backed properties and `python3` for the Python suites.

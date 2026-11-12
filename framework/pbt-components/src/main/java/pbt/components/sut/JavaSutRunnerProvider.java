@@ -28,9 +28,9 @@ import java.util.List;
  * select one; a type may be a simple or fully qualified name, generics are ignored. Ambiguity
  * is an error. A method with several parameters is called with the values of a {@link Tuple} input.
  *
- * <p>When the spec lists a {@code classpath}, the class is loaded from it by a classloader of
- * its own, released by {@link SutRunner#close()}. Instance
- * methods are called on a fresh instance per call, so SUT state does not leak between inputs.
+ * <p>When the spec lists a {@code searchPath}, the class is loaded from those directories and
+ * jars by a classloader of its own, released by {@link SutRunner#close()}. Instance methods are
+ * called on a fresh instance per call, so SUT state does not leak between inputs.
  */
 public final class JavaSutRunnerProvider implements SutRunnerProvider {
 
@@ -110,17 +110,17 @@ public final class JavaSutRunnerProvider implements SutRunnerProvider {
         return args;
     }
 
-    private static URL[] urls(List<String> classpath) {
-        URL[] urls = new URL[classpath.size()];
+    private static URL[] urls(List<String> searchPath) {
+        URL[] urls = new URL[searchPath.size()];
         for (int i = 0; i < urls.length; i++) {
-            Path path = Path.of(classpath.get(i)).toAbsolutePath();
+            Path path = Path.of(searchPath.get(i)).toAbsolutePath();
             if (!Files.exists(path)) {
-                throw new IllegalArgumentException("SUT classpath entry does not exist: " + path);
+                throw new IllegalArgumentException("SUT search path entry does not exist: " + path);
             }
             try {
                 urls[i] = path.toUri().toURL();
             } catch (MalformedURLException e) {
-                throw new IllegalArgumentException("invalid SUT classpath entry: " + path, e);
+                throw new IllegalArgumentException("invalid SUT search path entry: " + path, e);
             }
         }
         return urls;
@@ -176,16 +176,16 @@ public final class JavaSutRunnerProvider implements SutRunnerProvider {
         String methodName = parseMethodName(signature);
         List<String> parameterTypes = parseParameterTypes(signature);
 
-        boolean isolated = spec.classpath() != null && !spec.classpath().isEmpty();
+        boolean isolated = spec.searchPath() != null && !spec.searchPath().isEmpty();
         ClassLoader parent = Thread.currentThread().getContextClassLoader();
-        URLClassLoader isolatedLoader = isolated ? new ChildFirstClassLoader(urls(spec.classpath()), parent) : null;
+        URLClassLoader isolatedLoader = isolated ? new ChildFirstClassLoader(urls(spec.searchPath()), parent) : null;
         Class<?> cls;
         try {
             cls = Class.forName(spec.className(), true, isolated ? isolatedLoader : parent);
         } catch (ClassNotFoundException e) {
             closeQuietly(isolatedLoader);
             throw new IllegalArgumentException("SUT class not found: " + spec.className()
-                    + (isolated ? " on classpath " + spec.classpath() : ""), e);
+                    + (isolated ? " on search path " + spec.searchPath() : ""), e);
         }
         Method method;
         try {

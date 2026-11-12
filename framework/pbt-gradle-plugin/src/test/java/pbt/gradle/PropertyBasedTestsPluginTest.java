@@ -191,4 +191,39 @@ class PropertyBasedTestsPluginTest {
         assertFalse(json.get("passed").getAsBoolean());
         assertEquals("-1", json.get("witness").getAsString());
     }
+
+    @Test
+    void python_module_paths_are_resolved_against_the_project_directory() throws IOException {
+        assumeTrue(clingoAvailable(), "clingo not on PATH");
+        write("py/lib/pkg/__init__.py", "");
+        write("py/lib/pkg/helpers.py", "def identity(n):\n    return n\n");
+        write("py/lib/pkg/core.py", """
+                from .helpers import identity
+
+
+                def in_project(n):
+                    open("marker.txt").close()
+                    return identity(n)
+                """);
+        write("marker.txt", "");
+        write("src/main/resources/asp/pass.lp", "#show violation/0.\n");
+        write("src/main/resources/suites/python_module.json", """
+                {
+                  "name": "python_module",
+                  "suts": {
+                    "under_test": { "type": "python", "module": "pkg.core", "searchPath": ["py/lib"],
+                                    "method": "in_project(int)", "outputType": "int" }
+                  },
+                  "generator": { "kind": "int", "params": { "min": 0, "max": 5 } },
+                  "properties": [
+                    { "id": "no_exception", "type": "INVARIANT",
+                      "validator": { "kind": "asp", "relation": "asp/pass.lp", "failOnException": true } }
+                  ]
+                }
+                """);
+
+        BuildResult result = runner("propertyBasedTests", "--stacktrace").build();
+
+        assertTrue(result.getOutput().contains("[python_module/under_test] PASSED"), result.getOutput());
+    }
 }

@@ -2,7 +2,7 @@ package pbt.components.fixture;
 
 /**
  * Stand-in for a class that exists in two versions; the test compiles a second copy with
- * different behaviour and loads it through a SUT classpath.
+ * different behaviour and loads it through a SUT search path.
  */
 public final class Versioned {
 

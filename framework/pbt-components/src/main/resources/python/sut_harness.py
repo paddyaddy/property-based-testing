@@ -3,15 +3,19 @@
 
 Invoked by PythonSutRunner — not called by SUT authors directly:
 
-    python3 sut_harness.py --file <path> --target <name(...)> [--static] --server [extra args...]
+    python3 sut_harness.py (--file <path> | --module <dotted.name>) [--path <dir>]...
+                           --target <name(...)> [--static] --server [extra args...]
 
-The runner starts one persistent worker per SUT with ``--server``.  The worker loads
-the named file as a module, resolves the callable named by ``--target``, and then
+The runner starts one persistent worker per SUT with ``--server``.  The worker puts each
+``--path`` entry in front of ``sys.path`` (in the given order), loads the named file as a
+module or imports the named module (so a package with relative imports works), resolves the
+callable named by ``--target``, and then
 serves newline-delimited JSON requests on stdin (``{"input": ...}``, or ``{"args": [...]}``
 for a callable with several parameters, which receives the list spread as positional
 arguments), answering each
 with one line on stdout (``{"output": ...}`` or ``{"error": "...", "type": "..."}``) until stdin
-closes.
+closes.  The ``type`` is the exception class qualified by its module
+(``youtube_dl.utils.ExtractorError``); built-in exceptions keep their plain name (``ValueError``).
 
 Without ``--server`` the harness runs in single-shot mode: it reads one JSON input
 from stdin, invokes the callable with it as the sole argument, writes the JSON result
@@ -54,17 +58,27 @@ import sys
 def _load_module(file_path):
     """Import *file_path* as a Python module, resolving relative to CWD.
 
-    Raises ``ImportError`` with a descriptive message on failure.
+    The module is named after the file, so exceptions it defines are reported as
+    ``<file stem>.<class>``.  Raises ``ImportError`` with a descriptive message on failure.
     """
     abs_path = os.path.join(os.getcwd(), file_path)
     if not os.path.isfile(abs_path):
         raise ImportError(f"file not found: {abs_path!r}")
-    spec = importlib.util.spec_from_file_location("_sut_module", abs_path)
+    name = os.path.splitext(os.path.basename(abs_path))[0]
+    spec = importlib.util.spec_from_file_location(name, abs_path)
     if spec is None or spec.loader is None:
         raise ImportError(f"cannot create module spec from: {abs_path!r}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def _exception_type(exc):
+    """Name of the exception's class, qualified by its module unless it is a built-in."""
+    cls = type(exc)
+    if cls.__module__ == "builtins":
+        return cls.__qualname__
+    return f"{cls.__module__}.{cls.__qualname__}"
 
 
 # ---------------------------------------------------------------------------
@@ -188,7 +202,7 @@ def _server_loop(fn):
             result = fn(*args)
             sys.stdout.write(json.dumps({"output": result}) + "\n")
         except Exception as exc:
-            sys.stdout.write(json.dumps({"error": str(exc), "type": type(exc).__name__}) + "\n")
+            sys.stdout.write(json.dumps({"error": str(exc), "type": _exception_type(exc)}) + "\n")
         sys.stdout.flush()
 
 
@@ -197,6 +211,8 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     file_path = None
+    module_name = None
+    search_path = []
     target_sig = None
     force_static = False
     server_mode = False
@@ -206,6 +222,12 @@ def main(argv=None):
         arg = argv[i]
         if arg == "--file" and i + 1 < len(argv):
             file_path = argv[i + 1]
+            i += 2
+        elif arg == "--module" and i + 1 < len(argv):
+            module_name = argv[i + 1]
+            i += 2
+        elif arg == "--path" and i + 1 < len(argv):
+            search_path.append(argv[i + 1])
             i += 2
         elif arg == "--target" and i + 1 < len(argv):
             target_sig = argv[i + 1]
@@ -219,20 +241,24 @@ def main(argv=None):
         else:
             i += 1  # unknown / passthrough args are forwarded but not used
 
-    if not file_path:
-        sys.stderr.write("sut_harness: --file is required\n")
+    if bool(file_path) == bool(module_name):
+        sys.stderr.write("sut_harness: exactly one of --file and --module is required\n")
         return 1
+    source = file_path or module_name
     if not target_sig:
         sys.stderr.write("sut_harness: --target is required\n")
         return 1
 
+    sys.path[0:0] = search_path
+
     # --- Load module ---
     try:
-        module = _load_module(file_path)
+        module = _load_module(file_path) if file_path else importlib.import_module(module_name)
     except Exception as exc:
+        what = f"file {file_path!r}" if file_path else f"module {module_name!r}"
         sys.stderr.write(
-            f"sut_harness: failed to load file {file_path!r} "
-            f"(target={target_sig!r}): {exc}\n"
+            f"sut_harness: failed to load {what} "
+            f"(target={target_sig!r}): {type(exc).__name__}: {exc}\n"
         )
         return 1
 
@@ -240,11 +266,11 @@ def main(argv=None):
     class_name, method_name = _parse_target(target_sig)
     try:
         fn = _resolve_callable(module, class_name, method_name, force_static,
-                               file_path, target_sig)
+                               source, target_sig)
     except Exception as exc:
         sys.stderr.write(
             f"sut_harness: cannot resolve target {target_sig!r} "
-            f"in {file_path!r}: {exc}\n"
+            f"in {source!r}: {exc}\n"
         )
         return 1
 
@@ -260,7 +286,7 @@ def main(argv=None):
     except Exception as exc:
         sys.stderr.write(
             f"sut_harness: failed to parse stdin as JSON "
-            f"(file={file_path!r}, target={target_sig!r}): {exc}\n"
+            f"(source={source!r}, target={target_sig!r}): {exc}\n"
         )
         return 1
 
@@ -268,7 +294,7 @@ def main(argv=None):
         result = fn(input_value)
     except Exception as exc:
         sys.stderr.write(
-            f"sut_harness: invocation of {target_sig!r} from {file_path!r} raised: {exc}\n"
+            f"sut_harness: invocation of {target_sig!r} from {source!r} raised: {exc}\n"
         )
         return 1
 

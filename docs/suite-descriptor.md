@@ -151,14 +151,16 @@ All optional fields shown, with inline explanation in comments
 | `class` | java | Fully qualified class name |
 | `method` | java, python | Java: method name, optionally with the parameter types, e.g. `sort(List)`, `sort(java.util.List<java.lang.Integer>)` or `repeat(String, int)`; the types are required when the name is overloaded. A method with several parameters needs a `tuple` generator. Python: `fn(...)` or `Class.method(...)` |
 | `static` | java | `true` for a static method (default `false`) |
-| `file` | python | Script path |
+| `file` | python | Script path; exactly one of `file` and `module` |
+| `module` | python | Dotted module name to import, for code inside a package |
 | `args` | python | Extra arguments passed to the harness process |
 | `interpreter` | python | Interpreter executable, e.g. a venv's `python`; default `python3` |
 | `timeoutSeconds` | no | Per-call budget in seconds (python: the worker is killed and restarted after a timeout); default 10 |
 | `outputType` | non-java | Value-type key for deserializing the SUT's output |
-| `classpath` | no | java: directories and jars to load the SUT class from. The SUT gets a classloader of its own that prefers these entries over the project's classpath, so two SUTs can use different versions of the same class name, e.g. a buggy and a fixed build of a library. Entries must exist |
+| `searchPath` | no | Where the SUT's code is loaded from, read by each runner in its own way, so two SUTs can use different versions of the same code, e.g. a buggy and a fixed build of a library. java: directories and jars for a classloader of the SUT's own that prefers them over the project's classpath; entries must exist. python: entries put in front of `sys.path` |
+| `workingDir` | no | Working directory of a SUT that runs in a process of its own (python); default the project directory |
 
-Relative `file` and `classpath` entries are resolved against the project directory (the directory of the build that applies the plugin).
+Relative `file`, `searchPath`, `workingDir` and `interpreter` paths are resolved against the project directory (the directory of the build that applies the plugin). An `interpreter` without a directory part, such as `python3`, stays a command looked up on `PATH`.
 
 ### `GeneratorSpec`
 

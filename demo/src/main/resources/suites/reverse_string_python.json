@@ -1,0 +1,33 @@
+{
+  "name": "reverse_string_python",
+  "description": "reverse(str) -> str from the Python package textops, imported by module name; same involution property as the Java suite",
+  "suts": {
+    "reference": {
+      "type": "python",
+      "module": "textops.strings",
+      "searchPath": ["src/main/python"],
+      "method": "reverse(str)",
+      "outputType": "string"
+    },
+    "buggy": {
+      "type": "python",
+      "module": "textops.strings",
+      "searchPath": ["src/main/python"],
+      "method": "buggy_reverse(str)",
+      "outputType": "string"
+    }
+  },
+  "generator": {
+    "kind": "string",
+    "params": { "minLen": 0, "maxLen": 12 }
+  },
+  "properties": [
+    {
+      "id": "involution",
+      "type": "METAMORPHIC",
+      "description": "reverse(reverse(s)) == s",
+      "validator": { "kind": "asp", "relation": "asp/string_involution.lp" },
+      "transform": "stringReverse"
+    }
+  ]
+}

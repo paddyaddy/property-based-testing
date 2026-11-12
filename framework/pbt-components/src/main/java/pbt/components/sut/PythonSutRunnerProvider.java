@@ -23,6 +23,10 @@ import java.util.concurrent.*;
 
 /**
  * Invokes a Python SUT via a persistent worker process using the bundled harness.
+ *
+ * <p>The SUT is a {@code file} loaded as a module, or a {@code module} imported by its dotted
+ * name, so that a package with relative imports works. {@code searchPath} entries are put in
+ * front of {@code sys.path} before loading. The worker runs in {@code workingDir}.
  */
 public final class PythonSutRunnerProvider implements SutRunnerProvider {
 
@@ -42,8 +46,19 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
         List<String> cmd = new ArrayList<>();
         cmd.add(spec.interpreter() != null && !spec.interpreter().isBlank() ? spec.interpreter() : "python3");
         cmd.add(harness.toString());
-        cmd.add("--file");
-        cmd.add(spec.file());
+        if (spec.module() != null) {
+            cmd.add("--module");
+            cmd.add(spec.module());
+        } else {
+            cmd.add("--file");
+            cmd.add(spec.file());
+        }
+        if (spec.searchPath() != null) {
+            for (String entry : spec.searchPath()) {
+                cmd.add("--path");
+                cmd.add(entry);
+            }
+        }
         if (spec.method() != null && !spec.method().isBlank()) {
             cmd.add("--target");
             cmd.add(spec.method());
@@ -87,8 +102,10 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
 
     @Override
     public SutRunner build(SutSpec spec) {
-        if (spec.file() == null || spec.file().isBlank()) {
-            throw new IllegalArgumentException("python SUT spec requires a 'file'");
+        boolean hasFile = spec.file() != null && !spec.file().isBlank();
+        boolean hasModule = spec.module() != null && !spec.module().isBlank();
+        if (hasFile == hasModule) {
+            throw new IllegalArgumentException("python SUT spec requires either a 'file' or a 'module'");
         }
         if (spec.outputType() == null || spec.outputType().isBlank()) {
             throw new IllegalArgumentException("python SUT spec requires an 'outputType'");
@@ -97,12 +114,14 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
         Path harness = extractHarness();
         List<String> command = buildCommand(spec, harness);
         long timeout = spec.timeoutSeconds() != null ? spec.timeoutSeconds() : DEFAULT_TIMEOUT_SECONDS;
-        return new PersistentWorker(command, outputType, timeout, gson);
+        File workingDir = new File(spec.workingDir() != null ? spec.workingDir() : System.getProperty("user.dir"));
+        return new PersistentWorker(command, workingDir, outputType, timeout, gson);
     }
 
     private static final class PersistentWorker implements SutRunner {
 
         private final List<String> command;
+        private final File workingDir;
         private final Type outputType;
         private final long timeoutSeconds;
         private final Gson gson;
@@ -116,9 +135,11 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
         private BufferedWriter writer;
         private BufferedReader reader;
         private ByteArrayOutputStream stderrBuf;
+        private Thread stderrDrainer;
 
-        PersistentWorker(List<String> command, Type outputType, long timeoutSeconds, Gson gson) {
+        PersistentWorker(List<String> command, File workingDir, Type outputType, long timeoutSeconds, Gson gson) {
             this.command = command;
+            this.workingDir = workingDir;
             this.outputType = outputType;
             this.timeoutSeconds = timeoutSeconds;
             this.gson = gson;
@@ -128,7 +149,7 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
         private void start() {
             try {
                 ProcessBuilder pb = new ProcessBuilder(command);
-                pb.directory(new File(System.getProperty("user.dir")));
+                pb.directory(workingDir);
                 this.process = pb.start();
             } catch (IOException e) {
                 throw new UncheckedIOException("failed to start Python SUT worker", e);
@@ -140,7 +161,7 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
             this.stderrBuf = buf;
             Process started = process;
-            Thread stderrDrainer = new Thread(() -> {
+            this.stderrDrainer = new Thread(() -> {
                 try {
                     started.getErrorStream().transferTo(buf);
                 } catch (IOException ignored) {
@@ -180,12 +201,14 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
                 kill();
                 throw new RuntimeException("interrupted while waiting for the Python SUT worker", e);
             } catch (ExecutionException e) {
+                String stderr = stderrOfExitedWorker();
                 kill();
-                throw new UncheckedIOException("I/O error communicating with Python SUT worker",
+                throw new UncheckedIOException("I/O error communicating with Python SUT worker"
+                        + (stderr.isEmpty() ? "" : "; stderr: " + stderr),
                         e.getCause() instanceof IOException io ? io : new IOException(e.getCause()));
             }
             if (responseJson == null) {
-                String stderr = stderr();
+                String stderr = stderrOfExitedWorker();
                 kill();
                 throw new RuntimeException("Python SUT worker closed unexpectedly; stderr: " + stderr);
             }
@@ -199,6 +222,20 @@ public final class PythonSutRunnerProvider implements SutRunnerProvider {
 
         private String stderr() {
             return stderrBuf.toString(StandardCharsets.UTF_8).strip();
+        }
+
+        /**
+         * Stderr of a worker that closed its streams, once it has exited and its stderr has been read
+         * to the end, so a startup failure such as an import error is reported in full.
+         */
+        private String stderrOfExitedWorker() {
+            try {
+                process.waitFor(1, TimeUnit.SECONDS);
+                stderrDrainer.join(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return stderr();
         }
 
         /**

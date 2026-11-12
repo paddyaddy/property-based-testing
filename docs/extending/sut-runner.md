@@ -24,8 +24,10 @@ public final class HttpSutRunnerProvider implements SutRunnerProvider {
 - The input is a `Tuple` when the suite uses the `tuple` generator, one value per parameter;
   spread it over the call's arguments. Any other input is the single argument.
 - `SutSpec` offers `className`, `method`, `isStatic`, `args`, `file`, `interpreter`, `timeoutSeconds`,
-  `outputType` and `classpath`. Use `outputType` with a `ValueTypeProvider` to deserialize the output if it
-  does not come back as a Java object.
+  `outputType`, `searchPath`, `module` and `workingDir`. Use `outputType` with a `ValueTypeProvider`
+  to deserialize the output if it does not come back as a Java object. The paths arrive resolved
+  against the project directory. Read `searchPath` as "where this runner loads the SUT's code
+  from", in whatever form that takes for the runner.
 - If the runner holds resources (a process, a connection), override `close()`.
   The pipeline calls it when the runner is no longer needed.
 - Register in `META-INF/services/pbt.spi.sut.SutRunnerProvider`.

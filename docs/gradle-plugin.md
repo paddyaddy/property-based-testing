@@ -54,7 +54,7 @@ The task is in the `verification` group. The plugin makes `test` depend on it, s
 
 At execution time it:
 
-1. Builds a `URLClassLoader` from the project's compiled main classes, processed resources, and `runtimeClasspath`. This is the classpath the SUT's reflection-based runner uses to load SUT classes, unless a SUT lists its own `classpath` (see [suite-descriptor.md](suite-descriptor.md#sutspec)), in which case that SUT is loaded from it in a classloader of its own.
+1. Builds a `URLClassLoader` from the project's compiled main classes, processed resources, and `runtimeClasspath`. This is the classpath the SUT's reflection-based runner uses to load SUT classes, unless a java SUT lists its own `searchPath` (see [suite-descriptor.md](suite-descriptor.md#sutspec)), in which case that SUT is loaded from it in a classloader of its own.
 2. Sets that classloader as the thread's context classloader so `ServiceLoader` finds builtin components from `pbt-components` (shipped with the plugin) and any additional components the project puts on its classpath.
 3. Loads each `*.json` from `suiteDir` via `SuiteLoader`.
 4. For each SUT declared in a descriptor, builds a `SutRunner` via the `SutRunnerProvider` registry and runs the pipeline.
@@ -134,7 +134,7 @@ src/pbt/
     suites/                      suite descriptors
 ```
 
-A SUT is then simply a class of the library itself (`"class": "org.example.Foo"`, no `classpath`), and `propertyBasedTests` shows up in the IDE's Gradle view like any other task. To run the same suites against two versions of the library, check out the revision and run the task again.
+A SUT is then simply a class of the library itself (`"class": "org.example.Foo"`, no `searchPath`), and `propertyBasedTests` shows up in the IDE's Gradle view like any other task. To run the same suites against two versions of the library, check out the revision and run the task again.
 
 ## Adding custom components
 
