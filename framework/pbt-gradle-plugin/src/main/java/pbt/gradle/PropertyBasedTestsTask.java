@@ -15,6 +15,7 @@ import pbt.descriptor.PropertyDescriptor;
 import pbt.descriptor.SuiteDescriptor;
 import pbt.descriptor.SuiteLoader;
 import pbt.descriptor.SutSpec;
+import pbt.pipeline.AspPrograms;
 import pbt.pipeline.PipelineRunner;
 import pbt.pipeline.dto.PropertyResult;
 import pbt.pipeline.dto.SuiteResult;
@@ -89,7 +90,7 @@ public abstract class PropertyBasedTestsTask extends DefaultTask {
         if (pd.transform() != null) sb.append("Transform:  ").append(pd.transform()).append("\n");
         if (pd.applicability() != null) {
             sb.append("Applicability: ").append(pd.applicability()).append("\n");
-            String applicabilityProgram = loadResource(pd.applicability());
+            String applicabilityProgram = loadProgram(pd.applicability());
             if (applicabilityProgram != null) {
                 sb.append("Applicability program:\n").append(applicabilityProgram.stripTrailing()).append("\n");
             }
@@ -102,26 +103,20 @@ public abstract class PropertyBasedTestsTask extends DefaultTask {
         return sb.toString();
     }
 
-    private static String loadResource(String path) {
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        try (InputStream in = cl.getResourceAsStream(path)) {
-            if (in == null) return null;
-            return new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
     private static String loadRelation(JsonObject validator) {
         if (validator == null || !validator.has("relation") || validator.get("relation").isJsonNull()) {
             return null;
         }
-        String path = validator.get("relation").getAsString();
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        try (InputStream in = cl.getResourceAsStream(path)) {
-            if (in == null) return null;
-            return new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-        } catch (IOException e) {
+        return loadProgram(validator.get("relation").getAsString());
+    }
+
+    /**
+     * The program at {@code path} with its includes expanded, or null if it cannot be loaded.
+     */
+    private static String loadProgram(String path) {
+        try {
+            return AspPrograms.load(path);
+        } catch (RuntimeException e) {
             return null;
         }
     }

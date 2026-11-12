@@ -3,6 +3,7 @@ package pbt.components.validator;
 import com.google.gson.JsonObject;
 import pbt.components.asp.CliAspEngine;
 import pbt.descriptor.SuiteDescriptor;
+import pbt.pipeline.AspPrograms;
 import pbt.spi.Registry;
 import pbt.spi.asp.AspEngine;
 import pbt.spi.asp.facts.AspFactGeneratorProvider;
@@ -11,17 +12,14 @@ import pbt.spi.validator.CheckResult;
 import pbt.spi.validator.Validator;
 import pbt.spi.validator.ValidatorProvider;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ServiceLoader;
 
 /**
  * Builds ASP-backed validators for both invariant and metamorphic properties.
  *
  * <p>The {@code validator} descriptor object must contain a {@code "relation"} field
- * naming a classpath resource with the ASP rules. An optional {@code "violation"}
+ * naming a classpath resource with the ASP rules. The program may {@code #include} other classpath
+ * resources, see {@link AspPrograms}. An optional {@code "violation"}
  * field overrides the default query atom {@code "violation"}, and
  * {@code "failureSignature"} overrides the default failure label. Other fields are
  * passed to the fact renderer (for example {@code "scale"} for {@code double} values).
@@ -77,16 +75,7 @@ public final class AspValidatorProvider implements ValidatorProvider {
         if (params == null || !params.has("relation") || params.get("relation").isJsonNull()) {
             throw new IllegalArgumentException("ASP validator missing required 'relation' param");
         }
-        String path = params.get("relation").getAsString();
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        try (InputStream in = cl.getResourceAsStream(path)) {
-            if (in == null) {
-                throw new IllegalArgumentException("ASP relation resource not found: " + path);
-            }
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read ASP relation: " + path, e);
-        }
+        return AspPrograms.load(params.get("relation").getAsString());
     }
 
     private static String stringOrDefault(JsonObject params, String key, String defaultValue) {

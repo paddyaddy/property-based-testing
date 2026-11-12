@@ -77,9 +77,35 @@ A `tuple` input renders each component with the fact generator of its kind and t
 
 When the SUT raises an exception, the `out` facts are absent and one fact names the exception type: `exception("java.lang.NullPointerException").` (`source_exception(...)` and `followup_exception(...)` for metamorphic properties). A program can therefore require or forbid specific exceptions, for example `violation :- exception(_).` or `violation :- in(N), N < 0, not exception("java.lang.NumberFormatException").` Python SUTs report the unqualified class name, such as `"ValueError"`, and `"Timeout"` when a call exceeds `timeoutSeconds`. Without `failOnException` an exception only matters if the program looks at it.
 
+## Sharing definitions with `#include`
+
+A `.lp` file, whether a `relation` or an `applicability` program, can include other files with a directive on a line of its own:
+
+```
+#include "grammar.lp".
+```
+
+As with clingo, the path is relative to the directory of the including file (`../` works). The path of the top-level program, the `relation` or `applicability` in the descriptor, is relative to the classpath root. The framework replaces the directive with the content of that resource before the program reaches clingo, recursively. clingo's own `#include` cannot be used here because it resolves paths against the working directory, which does not work for resources on the classpath. A resource that is included more than once is inserted only the first time. A missing include fails the run and names the file that asked for it.
+
+A shared file can define what a class of inputs looks like, and each property adds a few lines on top of it:
+
+```
+% asp/is_number/hex_is_a_number.lp
+#include "grammar.lp".
+violation :- is_hex, out(0).
+#show violation/0.
+
+% asp/is_number/anything_else_is_not_a_number.lp
+#include "grammar.lp".
+violation :- out(1), not is_number_form.
+#show violation/0.
+```
+
+Here `grammar.lp` defines `is_hex`, `is_sci`, … over the input facts, plus `is_number_form` as their union. The "not a number" property is derived from the same definitions by negation, so the rejected cases are not listed by hand. `applicability` is not needed for this: the form of an input is part of the relation, and every generated input is checked.
+
 ## Writing a `.lp` file
 
-The file should contain rules that derive `violation` and a `#show violation/0.` directive. Do not include facts (those are prepended by the framework). Keep the file self-contained: no `#include` or external files.
+The file should contain rules that derive `violation` and a `#show violation/0.` directive. Do not include facts (those are prepended by the framework). Keep the file free of external files; shared definitions come in through `#include`.
 
 Minimal skeleton:
 

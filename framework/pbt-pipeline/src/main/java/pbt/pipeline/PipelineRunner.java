@@ -109,16 +109,6 @@ public final class PipelineRunner {
         this.codec = artifactsDir != null ? new ArtifactCodec() : null;
     }
 
-    private static String loadResource(String path) {
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        try (InputStream in = cl.getResourceAsStream(path)) {
-            if (in == null) return null;
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
     private static String formatRun(int index, CheckContext ctx, CheckResult result) {
         StringBuilder sb = new StringBuilder();
         sb.append("--- Run ").append(index).append(" ---\n");
@@ -327,13 +317,11 @@ public final class PipelineRunner {
                 skipped, failures, witness, log);
     }
 
-    // TODO make multiple applicability checks possible
     private Predicate<Object> buildApplicabilityCheck(
             PropertyDescriptor pd, String factGeneratorKind, JsonObject generatorParams) {
         String path = pd.applicability();
         if (path == null || path.isBlank()) return null;
-        String program = loadResource(path);
-        if (program == null) throw new IllegalArgumentException("Applicability program not found: " + path);
+        String program = AspPrograms.load(path);
         if (aspEngine == null) {
             throw new IllegalStateException("property '" + pd.id() + "' declares applicability '"
                     + path + "' but no AspEngine service is on the classpath");
