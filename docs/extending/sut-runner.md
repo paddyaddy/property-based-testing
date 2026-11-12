@@ -23,8 +23,8 @@ public final class HttpSutRunnerProvider implements SutRunnerProvider {
   configuration) and aborts the run.
 - The input is a `Tuple` when the suite uses the `tuple` generator, one value per parameter;
   spread it over the call's arguments. Any other input is the single argument.
-- `SutSpec` offers `className`, `method`, `isStatic`, `args`, `file`, `interpreter`, `timeoutSeconds` and
-  `outputType`. Use `outputType` with a `ValueTypeProvider` to deserialize the output if it
+- `SutSpec` offers `className`, `method`, `isStatic`, `args`, `file`, `interpreter`, `timeoutSeconds`,
+  `outputType` and `classpath`. Use `outputType` with a `ValueTypeProvider` to deserialize the output if it
   does not come back as a Java object.
 - If the runner holds resources (a process, a connection), override `close()`.
   The pipeline calls it when the runner is no longer needed.

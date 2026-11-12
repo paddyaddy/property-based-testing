@@ -6,9 +6,15 @@ import pbt.spi.sut.SutRunner;
 import pbt.spi.sut.SutRunnerProvider;
 import pbt.spi.type.Tuple;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +26,10 @@ import java.util.List;
  * at least one parameter. If several public methods share the name, the parameter types in the
  * descriptor's {@code method} (for example {@code "sort(List)"} or {@code "repeat(String, int)"})
  * select one; a type may be a simple or fully qualified name, generics are ignored. Ambiguity
- * is an error. A method with several parameters is called with the values of a {@link Tuple} input. Instance
+ * is an error. A method with several parameters is called with the values of a {@link Tuple} input.
+ *
+ * <p>When the spec lists a {@code classpath}, the class is loaded from it by a classloader of
+ * its own, released by {@link SutRunner#close()}. Instance
  * methods are called on a fresh instance per call, so SUT state does not leak between inputs.
  */
 public final class JavaSutRunnerProvider implements SutRunnerProvider {
@@ -101,6 +110,60 @@ public final class JavaSutRunnerProvider implements SutRunnerProvider {
         return args;
     }
 
+    private static URL[] urls(List<String> classpath) {
+        URL[] urls = new URL[classpath.size()];
+        for (int i = 0; i < urls.length; i++) {
+            Path path = Path.of(classpath.get(i)).toAbsolutePath();
+            if (!Files.exists(path)) {
+                throw new IllegalArgumentException("SUT classpath entry does not exist: " + path);
+            }
+            try {
+                urls[i] = path.toUri().toURL();
+            } catch (MalformedURLException e) {
+                throw new IllegalArgumentException("invalid SUT classpath entry: " + path, e);
+            }
+        }
+        return urls;
+    }
+
+    private static void closeQuietly(URLClassLoader loader) {
+        if (loader == null) return;
+        try {
+            loader.close();
+        } catch (IOException ignored) {
+        }
+    }
+
+    /**
+     * Loads classes from its own URLs before asking the parent, so two versions of a class with
+     * the same name can coexist and a version on the project's classpath cannot shadow the SUT's.
+     * JDK classes always come from the parent.
+     */
+    private static final class ChildFirstClassLoader extends URLClassLoader {
+
+        ChildFirstClassLoader(URL[] urls, ClassLoader parent) {
+            super(urls, parent);
+        }
+
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            synchronized (getClassLoadingLock(name)) {
+                Class<?> loaded = findLoadedClass(name);
+                if (loaded == null && !name.startsWith("java.")) {
+                    try {
+                        loaded = findClass(name);
+                    } catch (ClassNotFoundException ignored) {
+                    }
+                }
+                if (loaded == null) {
+                    return super.loadClass(name, resolve);
+                }
+                if (resolve) resolveClass(loaded);
+                return loaded;
+            }
+        }
+    }
+
     @Override
     public String name() {
         return "java";
@@ -113,34 +176,54 @@ public final class JavaSutRunnerProvider implements SutRunnerProvider {
         String methodName = parseMethodName(signature);
         List<String> parameterTypes = parseParameterTypes(signature);
 
+        boolean isolated = spec.classpath() != null && !spec.classpath().isEmpty();
+        ClassLoader parent = Thread.currentThread().getContextClassLoader();
+        URLClassLoader isolatedLoader = isolated ? new ChildFirstClassLoader(urls(spec.classpath()), parent) : null;
         Class<?> cls;
         try {
-            cls = Class.forName(spec.className(), true, Thread.currentThread().getContextClassLoader());
+            cls = Class.forName(spec.className(), true, isolated ? isolatedLoader : parent);
         } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("SUT class not found: " + spec.className(), e);
+            closeQuietly(isolatedLoader);
+            throw new IllegalArgumentException("SUT class not found: " + spec.className()
+                    + (isolated ? " on classpath " + spec.classpath() : ""), e);
         }
-        Method method = findMethod(cls, methodName, parameterTypes);
+        Method method;
+        try {
+            method = findMethod(cls, methodName, parameterTypes);
+        } catch (IllegalArgumentException e) {
+            closeQuietly(isolatedLoader);
+            throw e;
+        }
         method.setAccessible(true);
         Constructor<?> constructor = null;
         if (!spec.isStatic()) {
             try {
                 constructor = cls.getDeclaredConstructor();
             } catch (NoSuchMethodException e) {
+                closeQuietly(isolatedLoader);
                 throw new IllegalArgumentException(
                         "SUT class " + cls.getName() + " needs a no-arg constructor for an instance method", e);
             }
             constructor.setAccessible(true);
         }
         Constructor<?> instanceConstructor = constructor;
-        return input -> {
-            try {
-                Object target = instanceConstructor == null ? null : instanceConstructor.newInstance();
-                return method.invoke(target, arguments(method, input));
-            } catch (InvocationTargetException e) {
-                Throwable raised = e.getCause();
-                throw new SutException(raised.getClass().getName(), raised.getMessage(), raised);
-            } catch (ReflectiveOperationException e) {
-                throw new RuntimeException("SUT invocation failed: " + cls.getName() + "#" + methodName, e);
+        return new SutRunner() {
+            @Override
+            public Object run(Object input) {
+                try {
+                    Object target = instanceConstructor == null ? null : instanceConstructor.newInstance();
+                    return method.invoke(target, arguments(method, input));
+                } catch (InvocationTargetException e) {
+                    Throwable raised = e.getCause();
+                    throw new SutException(raised.getClass().getName(), raised.getMessage(), raised);
+                } catch (ReflectiveOperationException e) {
+                    throw new RuntimeException("SUT invocation failed: " + cls.getName() + "#" + methodName, e);
+                }
+            }
+
+            @Override
+            public void close() {
+                closeQuietly(isolatedLoader);
             }
         };
     }

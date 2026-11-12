@@ -156,6 +156,7 @@ All optional fields shown, with inline explanation in comments
 | `interpreter` | python | Interpreter executable, e.g. a venv's `python`; default `python3` |
 | `timeoutSeconds` | no | Per-call budget in seconds (python: the worker is killed and restarted after a timeout); default 10 |
 | `outputType` | non-java | Value-type key for deserializing the SUT's output |
+| `classpath` | no | java: directories and jars to load the SUT class from. The SUT gets a classloader of its own that prefers these entries over the project's classpath, so two SUTs can use different versions of the same class name, e.g. a buggy and a fixed build of a library. Entries must exist |
 
 ### `GeneratorSpec`
 

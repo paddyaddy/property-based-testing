@@ -21,6 +21,8 @@ import java.util.List;
  * @param timeoutSeconds per-call wall-clock budget, or null for the runner default
  * @param interpreter    interpreter executable for a python SUT (for example a venv's {@code python}); null means {@code python3}
  * @param outputType     output value-type key for a non-java SUT; null for java, whose output type is reflected
+ * @param classpath      directories and jars a java SUT's classes are loaded from, in a classloader of its own
+ *                       that prefers them over the project's classpath; null loads from the project's classpath
  */
 public record SutSpec(
         String type,
@@ -31,5 +33,19 @@ public record SutSpec(
         String file,
         Long timeoutSeconds,
         String interpreter,
-        String outputType) {
+        String outputType,
+        List<String> classpath) {
+
+    public SutSpec(
+            String type,
+            String className,
+            String method,
+            boolean isStatic,
+            List<String> args,
+            String file,
+            Long timeoutSeconds,
+            String interpreter,
+            String outputType) {
+        this(type, className, method, isStatic, args, file, timeoutSeconds, interpreter, outputType, null);
+    }
 }

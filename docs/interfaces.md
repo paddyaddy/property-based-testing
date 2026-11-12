@@ -80,7 +80,7 @@ The `Registry<P extends NamedProvider>` discovers implementations via `ServiceLo
 | | |
 |---|---|
 | **Contract** | `SutRunner build(SutSpec spec)` — constructs a runner from a `SutSpec` descriptor. |
-| **Use case** | ServiceLoader entry point for `SutRunner` implementations. The `SutSpec` carries `className`, `method`, `isStatic`, `args`, `file`, `interpreter`, `timeoutSeconds`, `outputType`; each runner reads only the fields it needs. |
+| **Use case** | ServiceLoader entry point for `SutRunner` implementations. The `SutSpec` carries `className`, `method`, `isStatic`, `args`, `file`, `interpreter`, `timeoutSeconds`, `outputType`, `classpath`; each runner reads only the fields it needs. |
 | **Implementations** | `JavaSutRunnerProvider` (`"java"`, reflection on static or instance methods, a `Tuple` input is spread over the parameters; class and method are resolved once at build time, instance methods run on a fresh instance per call) · `PythonSutRunnerProvider` (`"python"`, keeps one persistent `python3` worker per SUT, started via the bundled `sut_harness.py --server`; newline-delimited JSON requests and responses over stdin/stdout) |
 
 ---
