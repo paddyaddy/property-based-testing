@@ -234,23 +234,24 @@ public abstract class PropertyBasedTestsTask extends DefaultTask {
                             try (TestEventReporter propReporter =
                                          suiteReporter.reportTest(p.propertyId(), p.propertyId())) {
                                 propReporter.started(Instant.now());
+                                String counts = "generated=" + p.generated() + " checked=" + p.runs()
+                                        + " skipped=" + p.skipped() + " failures=" + p.failures();
+                                String witness = p.witness().map(valueType::describe).orElse("(none)");
+                                String summary = p.passed() ? counts : counts + " witness=" + witness;
                                 propReporter.output(Instant.now(),
                                         TestOutputEvent.Destination.StdOut,
-                                        formatPropertyHeader(descriptor, p.propertyId()));
+                                        "Summary: " + summary + "\n" + formatPropertyHeader(descriptor, p.propertyId()));
                                 for (String line : p.runLog()) {
                                     propReporter.output(Instant.now(),
                                             TestOutputEvent.Destination.StdOut, line);
                                 }
                                 if (p.passed()) {
                                     propReporter.succeeded(Instant.now());
+                                    getLogger().lifecycle("  {} PASSED  {}", p.propertyId(), summary);
                                 } else {
-                                    String witness = p.witness().map(valueType::describe).orElse("(none)");
-                                    propReporter.failed(Instant.now(), "Property violation",
-                                            "generated=" + p.generated() + " checked=" + p.runs()
-                                                    + " skipped=" + p.skipped() + " failures=" + p.failures()
-                                                    + " witness=" + witness);
+                                    propReporter.failed(Instant.now(), "Property violation", summary);
                                     failures.add(groupName + "/" + p.propertyId());
-                                    getLogger().lifecycle("  {} FAILED  witness: {}", p.propertyId(), witness);
+                                    getLogger().lifecycle("  {} FAILED  {}", p.propertyId(), summary);
                                 }
                             }
                         }

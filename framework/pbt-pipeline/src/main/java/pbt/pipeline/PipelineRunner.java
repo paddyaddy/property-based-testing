@@ -293,7 +293,7 @@ public final class PipelineRunner {
             Object input = inputs.get(i);
             if (applicability != null && !applicability.test(input)) {
                 skipped++;
-                log.add("--- Run " + (i + 1) + " --- SKIPPED\n");
+                log.add("--- Run " + (i + 1) + " --- SKIPPED\n  input:  " + input + "\n");
                 continue;
             }
             CheckContext ctx = buildContext(input, isMetamorphic, transform, transformRng, sutRunner);

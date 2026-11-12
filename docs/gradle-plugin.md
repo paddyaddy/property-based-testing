@@ -59,7 +59,7 @@ At execution time it:
 3. Loads each `*.json` from `suiteDir` via `SuiteLoader`.
 4. For each SUT declared in a descriptor, builds a `SutRunner` via the `SutRunnerProvider` registry and runs the pipeline.
 5. Streams test events via Gradle's `TestEventReporterFactory` API so IntelliJ and other Gradle-aware IDEs receive live pass/fail results in their test view.
-6. Logs `[suiteName/sutName] PASSED|FAILED` for every SUT, and the witness for any failing property.
+6. Logs `[suiteName/sutName] PASSED|FAILED` for every SUT and one summary line per property (`generated`, `checked`, `skipped`, `failures`, plus the `witness` when it failed). The same summary starts the property's output in the HTML report, whose run log lists the input of every run, including skipped ones.
 7. Throws a `GradleException` listing all failing properties if any exist.
 
 ## IDE test output
