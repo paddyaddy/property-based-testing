@@ -1,1 +1,2 @@
 pbt.components.validator.AspValidatorProvider
+pbt.components.validator.TrivialValidatorProvider

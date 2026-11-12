@@ -98,7 +98,7 @@ The `Registry<P extends NamedProvider>` discovers implementations via `ServiceLo
 |---|---|
 | **Contract** | `Validator build(JsonObject params, String generatorKind)` — `generatorKind` is the suite's generator name, used by ASP validators to pick the right fact renderer. The default method `build(JsonObject params, SuiteDescriptor suite)` is what the pipeline calls; it gives access to the generator params and `outputKind` and by default delegates to the one above. |
 | **Use case** | ServiceLoader entry point for `Validator` implementations. Referenced by `"kind"` in a property's `"validator"` object. |
-| **Implementations** | `AspValidatorProvider` (`"asp"`, runs clingo against a `.lp` file; sets `diagnostics` to the assembled ASP facts string) |
+| **Implementations** | `AspValidatorProvider` (`"asp"`, runs clingo against a `.lp` file; sets `diagnostics` to the assembled ASP facts string) · `TrivialValidatorProvider` (`"trivial"`, accepts every execution, for wiring tests) |
 
 ### `CheckContext` (record)
 | | |
