@@ -87,6 +87,15 @@ class MultiArgumentSutTest {
     }
 
     @Test
+    void a_component_can_name_its_own_fact_generator() {
+        var fg = new TupleAspFactGeneratorProvider().withGeneratorParams(json("""
+                { "components": [ { "kind": "int" }, { "kind": "string", "factGenerator": "long" } ] }
+                """));
+
+        assertEquals("in_0(3).\nin_1(ab).\n", fg.toFacts(new Tuple(List.of(3, "ab")), "in"));
+    }
+
+    @Test
     void tuple_facts_reject_a_plain_value() {
         var fg = new TupleAspFactGeneratorProvider().withGeneratorParams(json(TUPLE_PARAMS));
 

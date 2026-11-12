@@ -10,7 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Renders a {@link Tuple} by delegating each component to the fact generator of its kind,
+ * Renders a {@link Tuple} by delegating each component to the fact generator of its kind (or the
+ * one the component names with {@code factGenerator}),
  * with the position appended to the prefix: component 1 of an input is rendered with prefix
  * {@code in_1}, so a string there yields {@code in_1("abc").}
  *
@@ -39,7 +40,7 @@ public final class TupleAspFactGeneratorProvider implements AspFactGeneratorProv
         Registry<AspFactGeneratorProvider> registry = Registry.load(AspFactGeneratorProvider.class);
         List<AspFactGeneratorProvider> configured = new ArrayList<>();
         for (TupleComponent c : TupleComponent.parse(generatorParams)) {
-            configured.add(registry.get(c.kind()).withGeneratorParams(c.params()));
+            configured.add(registry.get(c.factGenerator()).withGeneratorParams(c.params()));
         }
         return new TupleAspFactGeneratorProvider(configured);
     }

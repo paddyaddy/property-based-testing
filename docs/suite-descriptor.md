@@ -224,5 +224,7 @@ arguments).
 
 Shrinking works per component with that component's own shrinker. ASP facts prefix each
 component with its position: the input above becomes `in_0("ab").` and `in_1(3).`; the output
-uses the `outputKind` renderer and stays `out(...)`. The built-in transforms do not apply to
+uses the `outputKind` renderer and stays `out(...)`. A component renders with the fact
+generator of its kind unless it names another one with `factGenerator`, like the suite-level
+field, e.g. `{ "kind": "url", "factGenerator": "charString" }`. The built-in transforms do not apply to
 tuples, so metamorphic properties on a tuple need a custom `Transform`.
