@@ -26,6 +26,9 @@ public final class SortedOutputValidatorProvider implements ValidatorProvider {
 
 - `CheckContext` carries `sourceInput`, `sourceOutput`, `followUpInput`, `followUpOutput`.
   The follow-up fields are `null` for invariant properties.
+- A validator that needs more than the generator name, for example the generator params or
+  the suite's `outputKind`, overrides `build(JsonObject params, SuiteDescriptor suite)`
+  instead; the pipeline calls that one.
 - Return `CheckResult.pass()` or `CheckResult.fail(signature[, diagnostics])`. The signature is a
   short stable label for the kind of failure.
 - Read your own settings from `params`, for example `params.get("relation")`.

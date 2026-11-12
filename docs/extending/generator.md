@@ -29,5 +29,8 @@ public final class EvenIntGeneratorProvider implements GeneratorProvider {
 "generator": { "kind": "evenInt", "params": { "max": 50 } }
 ```
 
+For a SUT with several parameters use the built-in `tuple` kind instead of writing a generator; it
+combines one generator per parameter, see [../suite-descriptor.md](../suite-descriptor.md).
+
 A new type also needs a shrinker and a value type with the same name, see
 [README.md](README.md#adding-a-new-value-type).

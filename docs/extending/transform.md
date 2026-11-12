@@ -16,7 +16,9 @@ public final class DoubleTransformProvider implements TransformProvider {
 }
 ```
 
-- `apply(source, rnd)` takes and returns `Object`; cast to the suite's input type.
+- `apply(source, rnd)` takes and returns `Object`; cast to the suite's input type. For a
+  `tuple` generator the input is a `pbt.spi.type.Tuple`; the built-in transforms do not handle it,
+  so write one that transforms the components you need.
 - Draw randomness only from the given `Random` to keep witnesses reproducible.
 - The validator decides which relation must hold between the two outputs, so the transform
   and the validator's relation have to agree (for example `negate` goes with a symmetry

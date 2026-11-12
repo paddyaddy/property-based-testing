@@ -18,6 +18,8 @@ public final class HttpSutRunnerProvider implements SutRunnerProvider {
 
 - `SutRunner.run(input)` executes one call and returns the output. Throw an unchecked
   exception if the call cannot be executed.
+- The input is a `Tuple` when the suite uses the `tuple` generator, one value per parameter;
+  spread it over the call's arguments. Any other input is the single argument.
 - `SutSpec` offers `className`, `method`, `isStatic`, `args`, `file`, `interpreter`, `timeoutSeconds` and
   `outputType`. Use `outputType` with a `ValueTypeProvider` to deserialize the output if it
   does not come back as a Java object.
