@@ -4,13 +4,13 @@
   "suts": {
     "reference": {
       "type": "java",
-      "class": "demo.sort.Sorter",
+      "class": "at.tugraz.pbt.demo.sort.Sorter",
       "method": "sort(java.util.List<java.lang.Integer>)",
       "static": false
     },
     "buggy": {
       "type": "java",
-      "class": "demo.sort.BuggySorter",
+      "class": "at.tugraz.pbt.demo.sort.BuggySorter",
       "method": "sort(java.util.List<java.lang.Integer>)",
       "static": false
     }

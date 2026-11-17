@@ -1,0 +1,7 @@
+at.tugraz.pbt.components.asp.facts.IntAspFactGeneratorProvider
+at.tugraz.pbt.components.asp.facts.IntListAspFactGeneratorProvider
+at.tugraz.pbt.components.asp.facts.BooleanAspFactGeneratorProvider
+at.tugraz.pbt.components.asp.facts.LongAspFactGeneratorProvider
+at.tugraz.pbt.components.asp.facts.DoubleAspFactGeneratorProvider
+at.tugraz.pbt.components.asp.facts.StringAspFactGeneratorProvider
+at.tugraz.pbt.components.asp.facts.TupleAspFactGeneratorProvider

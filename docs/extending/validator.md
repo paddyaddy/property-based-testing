@@ -1,6 +1,6 @@
 # Custom validator
 
-Interface: `pbt.spi.validator.ValidatorProvider`, producing a `Validator`.
+Interface: `at.tugraz.pbt.spi.validator.ValidatorProvider`, producing a `Validator`.
 `build(params, generatorKind)` gets the full `"validator"` object of the property
 (including `"kind"`) and the suite's generator name.
 

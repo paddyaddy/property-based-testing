@@ -4,13 +4,13 @@
   "suts": {
     "reference": {
       "type": "java",
-      "class": "demo.strings.StringOps",
+      "class": "at.tugraz.pbt.demo.strings.StringOps",
       "method": "reverse",
       "static": true
     },
     "buggy": {
       "type": "java",
-      "class": "demo.strings.StringOps",
+      "class": "at.tugraz.pbt.demo.strings.StringOps",
       "method": "buggyReverse",
       "static": true
     }

@@ -7,8 +7,8 @@ contracts.
 
 ## How resolution works
 
-Each component kind has a provider interface that extends `pbt.spi.NamedProvider`
-and reports a short `name()`. A `pbt.spi.Registry<P>` loads all providers of a kind
+Each component kind has a provider interface that extends `at.tugraz.pbt.spi.NamedProvider`
+and reports a short `name()`. An `at.tugraz.pbt.spi.Registry<P>` loads all providers of a kind
 with `java.util.ServiceLoader` and indexes them by name:
 
 ```java
@@ -43,7 +43,7 @@ a service file. There is no registration call and no framework edit.
    }
    ```
 
-2. List it in a service file named after the fully qualified provider interface (the SPIs live in sub-packages such as `pbt.spi.generator`, `pbt.spi.shrinker`, `pbt.spi.sut`):
+2. List it in a service file named after the fully qualified provider interface (the SPIs live in sub-packages such as `at.tugraz.pbt.spi.generator`, `at.tugraz.pbt.spi.shrinker`, `at.tugraz.pbt.spi.sut`):
 
    ```
    src/main/resources/META-INF/services/pbt.spi.generator.GeneratorProvider

@@ -1,6 +1,6 @@
 # Custom generator
 
-Interface: `pbt.spi.generator.GeneratorProvider`, producing a `Generator<T>`.
+Interface: `at.tugraz.pbt.spi.generator.GeneratorProvider`, producing a `Generator<T>`.
 
 ```java
 package com.example;

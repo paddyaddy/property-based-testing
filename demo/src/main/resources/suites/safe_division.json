@@ -4,13 +4,13 @@
   "suts": {
     "nonThrowing": {
       "type": "java",
-      "class": "demo.math.SafeDivision",
+      "class": "at.tugraz.pbt.demo.math.SafeDivision",
       "method": "nonThrowingDivide(Integer, Integer)",
       "static": true
     },
     "throwing": {
       "type": "java",
-      "class": "demo.math.SafeDivision",
+      "class": "at.tugraz.pbt.demo.math.SafeDivision",
       "method": "throwingDivide(Integer, Integer)",
       "static": true
     }

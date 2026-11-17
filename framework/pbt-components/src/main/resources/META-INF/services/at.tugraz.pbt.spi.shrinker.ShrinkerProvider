@@ -1,0 +1,7 @@
+at.tugraz.pbt.components.shrinker.IntShrinkerProvider
+at.tugraz.pbt.components.shrinker.IntListShrinkerProvider
+at.tugraz.pbt.components.shrinker.BooleanShrinkerProvider
+at.tugraz.pbt.components.shrinker.LongShrinkerProvider
+at.tugraz.pbt.components.shrinker.DoubleShrinkerProvider
+at.tugraz.pbt.components.shrinker.StringShrinkerProvider
+at.tugraz.pbt.components.shrinker.TupleShrinkerProvider

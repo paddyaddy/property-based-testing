@@ -53,13 +53,13 @@ All optional fields shown, with inline explanation in comments
   "suts": {
     "reference": {
       "type": "java",
-      "class": "demo.sort.Sorter",     // fully qualified class
+      "class": "at.tugraz.pbt.demo.sort.Sorter",     // fully qualified class
       "method": "sort(java.util.List<java.lang.Integer>)",
       "static": false                  // default false; set true for static methods
     },
     "buggy": {
       "type": "java",
-      "class": "demo.sort.BuggySorter",
+      "class": "at.tugraz.pbt.demo.sort.BuggySorter",
       "method": "sort(java.util.List<java.lang.Integer>)"
       // timeoutSeconds: per-call wall-clock budget (python); omit for runner default
     }

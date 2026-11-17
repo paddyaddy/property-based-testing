@@ -4,13 +4,13 @@
   "suts": {
     "reference": {
       "type": "java",
-      "class": "demo.search.Search",
+      "class": "at.tugraz.pbt.demo.search.Search",
       "method": "findFirst(List, Integer)",
       "static": true
     },
     "buggy": {
       "type": "java",
-      "class": "demo.search.Search",
+      "class": "at.tugraz.pbt.demo.search.Search",
       "method": "buggyFindFirst(List, Integer)",
       "static": true
     }

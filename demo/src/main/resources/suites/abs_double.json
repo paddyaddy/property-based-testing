@@ -4,13 +4,13 @@
   "suts": {
     "reference": {
       "type": "java",
-      "class": "demo.math.DoubleMath",
+      "class": "at.tugraz.pbt.demo.math.DoubleMath",
       "method": "abs",
       "static": true
     },
     "buggy": {
       "type": "java",
-      "class": "demo.math.DoubleMath",
+      "class": "at.tugraz.pbt.demo.math.DoubleMath",
       "method": "buggyAbs",
       "static": true
     }

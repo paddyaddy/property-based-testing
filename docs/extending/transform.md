@@ -1,6 +1,6 @@
 # Custom transform
 
-Interface: `pbt.spi.transform.TransformProvider`, returning a stateless `Transform`. A
+Interface: `at.tugraz.pbt.spi.transform.TransformProvider`, returning a stateless `Transform`. A
 metamorphic property names it with `"transform"`; the pipeline runs the SUT on the source
 input and on the follow-up input and hands both to the validator.
 
@@ -17,7 +17,7 @@ public final class DoubleTransformProvider implements TransformProvider {
 ```
 
 - `apply(source, rnd)` takes and returns `Object`; cast to the suite's input type. For a
-  `tuple` generator the input is a `pbt.spi.type.Tuple`; the built-in transforms do not handle it,
+  `tuple` generator the input is a `at.tugraz.pbt.spi.type.Tuple`; the built-in transforms do not handle it,
   so write one that transforms the components you need.
 - Draw randomness only from the given `Random` to keep witnesses reproducible.
 - The validator decides which relation must hold between the two outputs, so the transform

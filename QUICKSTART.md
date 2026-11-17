@@ -39,7 +39,7 @@ pluginManagement {
 ```groovy
 plugins {
     id 'java'
-    id 'org.tugraz.pbt'
+    id 'at.tugraz.pbt'
 }
 ```
 

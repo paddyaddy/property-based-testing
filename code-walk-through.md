@@ -1,7 +1,7 @@
 # Code walkthrough: from suite descriptor to test result
 
-Paths are relative to the repo root; `F/` = `framework/`, `C/` = `F/pbt-components/src/main/java/pbt/components`,
-`P/` = `F/pbt-pipeline/src/main/java/pbt`, `G/` = `F/pbt-gradle-plugin/src/main/java/pbt/gradle`.
+Paths are relative to the repo root; `F/` = `framework/`, `C/` = `F/pbt-components/src/main/java/at/tugraz/pbt/components`,
+`P/` = `F/pbt-pipeline/src/main/java/at/tugraz/pbt`, `G/` = `F/pbt-gradle-plugin/src/main/java/at/tugraz/pbt/gradle`.
 
 ## 0. The input: logic only, no code
 

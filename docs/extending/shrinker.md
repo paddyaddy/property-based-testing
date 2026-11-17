@@ -1,6 +1,6 @@
 # Custom shrinker
 
-Interface: `pbt.spi.shrinker.ShrinkerProvider`, producing a `Shrinker<T>`. The shrinker is
+Interface: `at.tugraz.pbt.spi.shrinker.ShrinkerProvider`, producing a `Shrinker<T>`. The shrinker is
 matched to the suite's generator by identical `name()` and receives the same `params`.
 
 ```java

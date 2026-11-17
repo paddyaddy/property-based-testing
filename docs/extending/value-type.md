@@ -1,6 +1,6 @@
 # Custom value type
 
-Interface: `pbt.spi.type.ValueTypeProvider`. It tells the framework how to serialize and
+Interface: `at.tugraz.pbt.spi.type.ValueTypeProvider`. It tells the framework how to serialize and
 show values of a type. It is matched to the suite's generator by identical `name()`.
 
 ```java

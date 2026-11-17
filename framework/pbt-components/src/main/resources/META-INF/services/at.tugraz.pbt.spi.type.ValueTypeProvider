@@ -1,0 +1,7 @@
+at.tugraz.pbt.components.type.IntValueTypeProvider
+at.tugraz.pbt.components.type.IntListValueTypeProvider
+at.tugraz.pbt.components.type.BooleanValueTypeProvider
+at.tugraz.pbt.components.type.LongValueTypeProvider
+at.tugraz.pbt.components.type.DoubleValueTypeProvider
+at.tugraz.pbt.components.type.StringValueTypeProvider
+at.tugraz.pbt.components.type.TupleValueTypeProvider

@@ -1,6 +1,6 @@
 # Gradle plugin
 
-The `org.tugraz.pbt` plugin adds a `propertyBasedTests` task that discovers suite descriptor JSON files, runs the PBT pipeline against each declared SUT, and fails the build if any property is violated.
+The `at.tugraz.pbt` plugin adds a `propertyBasedTests` task that discovers suite descriptor JSON files, runs the PBT pipeline against each declared SUT, and fails the build if any property is violated.
 
 ## Applying the plugin
 
@@ -17,7 +17,7 @@ pluginManagement {
 ```groovy
 plugins {
     id 'java'
-    id 'org.tugraz.pbt'
+    id 'at.tugraz.pbt'
 }
 ```
 
@@ -106,7 +106,7 @@ A library keeps its suites, ASP programs and custom components in a source set o
 // build.gradle
 plugins {
     id 'java'
-    id 'org.tugraz.pbt'
+    id 'at.tugraz.pbt'
 }
 
 sourceSets {
@@ -117,7 +117,7 @@ sourceSets {
 }
 
 dependencies {
-    pbtCompileOnly 'org.tugraz.pbt:pbt-pipeline:0.1.0'   // only if the source set has its own components
+    pbtCompileOnly 'at.tugraz.pbt:pbt-pipeline:0.1.0'   // only if the source set has its own components
 }
 
 pbt {
@@ -140,7 +140,7 @@ A SUT is then simply a class of the library itself (`"class": "org.example.Foo"`
 
 Put a provider implementation and its `META-INF/services/` entry on the project's `runtimeClasspath`. The task's URLClassLoader inherits from the plugin's classloader (which has all builtin providers), so your provider is discovered alongside the builtins without any framework edit.
 
-To compile your own provider against the SPI contracts (`pbt.spi.*`), the project needs `pbt-pipeline` on its compile classpath. With the framework as an included build, declare the include at the top level of `settings.gradle` (not only in `pluginManagement`) so the dependency can be substituted:
+To compile your own provider against the SPI contracts (`at.tugraz.pbt.spi.*`), the project needs `pbt-pipeline` on its compile classpath. With the framework as an included build, declare the include at the top level of `settings.gradle` (not only in `pluginManagement`) so the dependency can be substituted:
 
 ```groovy
 // settings.gradle
@@ -148,7 +148,7 @@ includeBuild '../pbt/framework'
 
 // build.gradle
 dependencies {
-    compileOnly 'org.tugraz.pbt:pbt-pipeline:0.1.0'
+    compileOnly 'at.tugraz.pbt:pbt-pipeline:0.1.0'
 }
 ```
 

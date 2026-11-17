@@ -4,13 +4,13 @@
   "suts": {
     "reference": {
       "type": "java",
-      "class": "demo.math.BooleanOps",
+      "class": "at.tugraz.pbt.demo.math.BooleanOps",
       "method": "not",
       "static": true
     },
     "buggy": {
       "type": "java",
-      "class": "demo.math.BooleanOps",
+      "class": "at.tugraz.pbt.demo.math.BooleanOps",
       "method": "buggyNot",
       "static": true
     }

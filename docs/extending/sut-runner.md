@@ -1,6 +1,6 @@
 # Custom SUT runner
 
-Interface: `pbt.spi.sut.SutRunnerProvider`, producing a `SutRunner` from a `SutSpec`. The
+Interface: `at.tugraz.pbt.spi.sut.SutRunnerProvider`, producing a `SutRunner` from a `SutSpec`. The
 `"type"` field of a SUT in the descriptor selects the provider.
 
 ```java

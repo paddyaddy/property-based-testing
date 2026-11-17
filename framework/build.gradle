@@ -1,5 +1,5 @@
 allprojects {
-    group = 'org.tugraz.pbt'
+    group = 'at.tugraz.pbt'
     version = '0.1.0'
 
     repositories {
